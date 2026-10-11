@@ -2,6 +2,9 @@
 [Ll]ibrary/
 [Tt]emp/
 [Oo]bj/
+[Bb]in/
+**/bin/
+**/obj/
 [Bb]uild/
 [Bb]uilds/
 [Ll]ogs/
@@ -13,6 +16,7 @@
 .idea/
 .vscode/
 *.csproj
+!*.github/workflows/support/CiRunner.csproj
 *.unityproj
 *.sln
 *.suo

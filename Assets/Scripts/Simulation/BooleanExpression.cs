@@ -115,10 +115,11 @@ namespace ARLab.Simulation
         public string ToSop()
         {
             if (_root == null) return string.Empty;
+            var normalized = NormalizeNot(_root);
             var terms = new List<List<Minterm>>();
 
             // Expand into minterms, then absorb duplicates.
-            Expand(_root, new List<Minterm>(), terms);
+            Expand(normalized, new List<Minterm>(), terms);
             List<char> byVars = Variables();
 
             // A term only mentions the variables it contains: 'A + B' must render as "A + B",
@@ -143,15 +144,85 @@ namespace ARLab.Simulation
                     if (negated[i]) sb.Append(byVars[i]).Append('\'');
                     else sb.Append(byVars[i]);
                 }
-                uniq.Add(sb.ToString());
+                if (sb.Length > 0) uniq.Add(sb.ToString());
             }
             return string.Join(" + ", uniq);
+        }
+
+        /// <summary>Renders the expression in canonical Product-of-Sums form, e.g. (A+B)(A'+B').</summary>
+        public string ToPos()
+        {
+            if (_root == null) return string.Empty;
+            List<char> byVars = Variables();
+            if (byVars.Count == 0) return string.Empty;
+
+            var maxterms = new List<string>();
+            int combinations = 1 << byVars.Count;
+            var assignment = new Dictionary<char, bool>(byVars.Count);
+
+            for (int mask = 0; mask < combinations; mask++)
+            {
+                for (int i = 0; i < byVars.Count; i++)
+                {
+                    int bit = byVars.Count - 1 - i;
+                    assignment[byVars[i]] = (mask & (1 << bit)) != 0;
+                }
+
+                if (!Evaluate(assignment))
+                {
+                    var sb = new StringBuilder();
+                    sb.Append('(');
+                    for (int i = 0; i < byVars.Count; i++)
+                    {
+                        if (i > 0) sb.Append('+');
+                        sb.Append(byVars[i]);
+                        if (assignment[byVars[i]]) sb.Append('\'');
+                    }
+                    sb.Append(')');
+                    maxterms.Add(sb.ToString());
+                }
+            }
+
+            if (maxterms.Count == 0) return "1";
+            if (maxterms.Count == combinations) return "0";
+            return string.Join("", maxterms);
         }
 
         private struct Minterm
         {
             public int VarIndex;
             public bool Negated;
+        }
+
+        private static Node NormalizeNot(Node n)
+        {
+            if (n == null) return null;
+            if (n is NotNode nt)
+            {
+                if (nt.Inner is NotNode doubleNot) return NormalizeNot(doubleNot.Inner);
+                if (nt.Inner is AndNode a)
+                {
+                    return new OrNode
+                    {
+                        A = NormalizeNot(new NotNode { Inner = a.A }),
+                        B = NormalizeNot(new NotNode { Inner = a.B })
+                    };
+                }
+                if (nt.Inner is OrNode o)
+                {
+                    return new AndNode
+                    {
+                        A = NormalizeNot(new NotNode { Inner = o.A }),
+                        B = NormalizeNot(new NotNode { Inner = o.B })
+                    };
+                }
+                return nt;
+            }
+            if (n is AndNode andNode)
+                return new AndNode { A = NormalizeNot(andNode.A), B = NormalizeNot(andNode.B) };
+            if (n is OrNode orNode)
+                return new OrNode { A = NormalizeNot(orNode.A), B = NormalizeNot(orNode.B) };
+            return n;
         }
 
         private void Expand(Node n, List<Minterm> acc, List<List<Minterm>> results)

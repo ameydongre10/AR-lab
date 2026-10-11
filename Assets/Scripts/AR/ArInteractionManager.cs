@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
@@ -53,6 +54,7 @@ namespace ARLab.AR
         [SerializeField] private float pickRange = 100f;
 
         private static readonly PointerEventData _pointerData = new PointerEventData(null);
+        private static readonly List<RaycastResult> _uiRaycastResults = new List<RaycastResult>();
 
         private Vector2 _pressPoint;
         private float _pressTime;
@@ -298,9 +300,10 @@ namespace ARLab.AR
         {
             var es = EventSystem.current;
             if (es == null) return false;
-            _pointerData.Reset();
             _pointerData.position = screenPoint;
-            return es.IsPointerOverGameObject(0);
+            _uiRaycastResults.Clear();
+            es.RaycastAll(_pointerData, _uiRaycastResults);
+            return _uiRaycastResults.Count > 0;
         }
     }
 }

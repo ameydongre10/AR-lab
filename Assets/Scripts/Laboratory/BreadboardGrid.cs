@@ -176,15 +176,16 @@ namespace ARLab.Laboratory
         {
             column = 0;
             row = BreadboardRow.A;
-            if (local.y > 0f)
+            float rowCoord = Mathf.Abs(local.z) > 0.0001f ? local.z : local.y;
+            if (rowCoord > 0f)
             {
-                float y = local.y;
+                float y = rowCoord;
                 int i = Mathf.Clamp(Mathf.RoundToInt((4f * RowPitch + TrenchGap * 0.5f - y) / RowPitch), 0, 4);
                 row = (BreadboardRow)i;
             }
             else
             {
-                float y = -local.y;
+                float y = -rowCoord;
                 int i = Mathf.Clamp(Mathf.RoundToInt((4f * RowPitch + TrenchGap * 0.5f - y) / RowPitch), 0, 4);
                 row = (BreadboardRow)(i + 5);
             }

@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using ARLab.Core;
+using ARLab.Laboratory;
 
 namespace ARLab.Electronics
 {
@@ -40,6 +41,7 @@ namespace ARLab.Electronics
         private MeshFilter _filter;
         private MeshRenderer _renderer;
         private Mesh _mesh;
+        private MaterialPropertyBlock _mpb;
         private readonly System.Collections.Generic.List<Vector3> _v = new System.Collections.Generic.List<Vector3>(128);
         private readonly System.Collections.Generic.List<Vector3> _n = new System.Collections.Generic.List<Vector3>(128);
         private readonly System.Collections.Generic.List<Color> _c = new System.Collections.Generic.List<Color>(128);
@@ -66,6 +68,8 @@ namespace ARLab.Electronics
             if (_renderer == null) _renderer = gameObject.AddComponent<MeshRenderer>();
             _renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             _renderer.receiveShadows = false;
+            if (_renderer.sharedMaterial == null) _renderer.sharedMaterial = LabMaterials.Standard();
+            _mpb = new MaterialPropertyBlock();
             _lastA = _lastB = Vector3.zero;
             _dirty = true;
         }
@@ -131,18 +135,23 @@ namespace ARLab.Electronics
         private void Rebuild(Vector3 a, Vector3 b)
         {
             _dirty = false;
-            if (_mesh != null) Destroy(_mesh);
+            if (_mesh != null) LabMaterials.Discard(_mesh);
             _mesh = WireMeshBuilder.Build(a, b, sag, radius, segments, sides, _v, _n, _c, _t);
             _filter.sharedMesh = _mesh;
-            if (_renderer != null && _renderer.sharedMaterial != null)
+            if (_renderer != null)
             {
-                _renderer.material.color = color;
+                if (_renderer.sharedMaterial == null) _renderer.sharedMaterial = LabMaterials.Standard();
+                if (_mpb == null) _mpb = new MaterialPropertyBlock();
+                _renderer.GetPropertyBlock(_mpb);
+                _mpb.SetColor("_BaseColor", color);
+                _mpb.SetColor("_Color", color);
+                _renderer.SetPropertyBlock(_mpb);
             }
         }
 
         private void OnDestroy()
         {
-            if (_mesh != null) Destroy(_mesh);
+            if (_mesh != null) LabMaterials.Discard(_mesh);
         }
     }
 }

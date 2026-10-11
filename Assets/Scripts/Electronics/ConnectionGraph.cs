@@ -172,6 +172,18 @@ namespace ARLab.Electronics
             Rebuild();
         }
 
+        public int RemoveTiesByRef(object reference)
+        {
+            if (reference == null || _ties.Count == 0) return 0;
+            int removed = _ties.RemoveAll(e => ReferenceEquals(e.Ref, reference) || Equals(e.Ref, reference));
+            if (removed > 0)
+            {
+                if (_batching > 0) _rebuildPending = true;
+                else Rebuild();
+            }
+            return removed;
+        }
+
         /// <summary>Creates a user wire. Returns false for self-connection or duplicates.</summary>
         public bool AddWire(int a, int b, object wireRef = null)
         {

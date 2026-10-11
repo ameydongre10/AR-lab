@@ -142,7 +142,7 @@ namespace ARLab
             // Placement is configured, not merely attached: without the lab root and raycast
             // controller it silently does nothing, and without a reticle the student has no
             // idea where a tap will land.
-            placement.Configure(raycasts, BuildReticle(), laboratory.LabRoot, laboratory.LabRoot.GetComponentInChildren<Renderer>());
+            placement.Configure(raycasts, BuildReticle(), laboratory.LabRoot, laboratory.LabRoot.GetComponentInChildren<Renderer>(true));
 
             interaction.Configure(placement, cam, laboratory, machine);
             hud.Configure(this, laboratory, tutorial);
@@ -360,6 +360,19 @@ namespace ARLab
         public void OnDeleteSelected() => laboratory.DeleteSelected();
         public void OnReset() => laboratory.ResetExperiment();
         public void OnCancelWire() => laboratory.CancelWire();
+
+        public void SetExperiment(ExperimentDefinition def)
+        {
+            if (def == null) return;
+            experiment = def;
+            if (tutorial != null) tutorial.Begin(experiment);
+            EventBus.Publish(new NotificationEvent($"Active experiment: {experiment.Title}", NotificationSeverity.Info));
+        }
+
+        public void ToggleExperiment()
+        {
+            SetExperiment(experiment == ExperimentDefinition.SopXor ? ExperimentDefinition.PosXor : ExperimentDefinition.SopXor);
+        }
 
         public void OnEvaluate()
         {

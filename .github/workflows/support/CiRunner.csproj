@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <OutputType>Exe</OutputType>
+    <GenerateProgramFile>false</GenerateProgramFile>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageReference Include="NUnit" Version="3.14.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="4.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="../../../Assets/Scripts/Core/EventBus.cs" Link="Core/EventBus.cs" />
+    <Compile Include="../../../Assets/Scripts/Core/GameEvents.cs" Link="Core/GameEvents.cs" />
+    <Compile Include="../../../Assets/Scripts/Simulation/*.cs" Link="Simulation/%(Filename)%(Extension)" />
+    <Compile Include="../../../Assets/Scripts/Electronics/*.cs" Link="Electronics/%(Filename)%(Extension)" />
+    <Compile Include="../../../Assets/Scripts/Laboratory/BreadboardGrid.cs" Link="Laboratory/BreadboardGrid.cs" />
+    <Compile Include="../../../Assets/Scripts/Laboratory/Breadboard.cs" Link="Laboratory/Breadboard.cs" />
+    <Compile Include="../../../Assets/Scripts/Laboratory/LabMaterials.cs" Link="Laboratory/LabMaterials.cs" />
+    <Compile Include="../../../Assets/Scripts/Laboratory/ComponentFactory.cs" Link="Laboratory/ComponentFactory.cs" />
+    <Compile Include="../../../Assets/Tests/EditMode/BooleanExpressionTests.cs" Link="Tests/BooleanExpressionTests.cs" />
+    <Compile Include="../../../Assets/Tests/EditMode/ConnectionGraphTests.cs" Link="Tests/ConnectionGraphTests.cs" />
+    <Compile Include="../../../Assets/Tests/EditMode/DigitalLogicSimulatorTests.cs" Link="Tests/DigitalLogicSimulatorTests.cs" />
+    <Compile Include="../../../Assets/Tests/EditMode/IcDefinitionTests.cs" Link="Tests/IcDefinitionTests.cs" />
+    <Compile Include="../../../Assets/Tests/EditMode/LogicValueTests.cs" Link="Tests/LogicValueTests.cs" />
+    <Compile Include="../../../Assets/Tests/EditMode/TruthTableEvaluatorTests.cs" Link="Tests/TruthTableEvaluatorTests.cs" />
+    <Compile Include="../../../Assets/Tests/EditMode/BreadboardGeometryTests.cs" Link="Tests/BreadboardGeometryTests.cs" />
+    <Compile Include="../../../Assets/Tests/EditMode/ComponentPinTests.cs" Link="Tests/ComponentPinTests.cs" />
+  </ItemGroup>
+
+</Project>

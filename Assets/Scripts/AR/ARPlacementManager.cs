@@ -25,7 +25,7 @@ namespace ARLab.AR
         [SerializeField] private float maxScale = 3f;
         [SerializeField] private float dragSpeed = 1f;
         [SerializeField] private float rotateSpeed = 1f;
-        [SerializeField] private float minVerticalAngle = 10f;
+        [SerializeField] private float minVerticalAngle = 0f;
         [SerializeField] private float maxVerticalAngle = 80f;
 
         [Header("Behaviour")]
