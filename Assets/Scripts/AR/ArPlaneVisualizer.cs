@@ -68,6 +68,8 @@ namespace ARLab.AR
 
             var renderer = quad.GetComponent<MeshRenderer>();
             if (renderer != null) renderer.sharedMaterial = LabMaterials.TransparentOverlay(planeTint, planeAlpha);
+            if (quad.GetComponent<ARPlane>() == null) quad.AddComponent<ARPlane>();
+            if (quad.GetComponent<ARPlaneMeshVisualizer>() == null) quad.AddComponent<ARPlaneMeshVisualizer>();
             quad.SetActive(false);
 
             // Kept out of the active hierarchy: ARPlaneManager instantiates it per plane.

@@ -62,6 +62,14 @@ namespace ARLab.Electronics
         public string Description => description;
         public IReadOnlyList<ComponentPin> Pins => _pins;
         public IReadOnlyList<ComponentPin> PinList => _pins;
+
+        public ComponentPin Pin(int pinNumber)
+        {
+            for (int i = 0; i < _pins.Count; i++)
+                if (_pins[i] != null && _pins[i].PinNumber == pinNumber) return _pins[i];
+            return null;
+        }
+
         public int VccTerminal => _vccTerminal;
         public int GndTerminal => _gndTerminal;
 

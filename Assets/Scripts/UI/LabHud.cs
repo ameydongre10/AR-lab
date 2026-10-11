@@ -292,16 +292,17 @@ namespace ARLab.UI
             // ---- action bar
             RectTransform actions = MakePanel(root, "ActionBar", new Vector2(0f, 0f), new Vector2(1f, 0f),
                 new Vector2(24f, 24f), new Vector2(-24f, 220f), PanelBg);
-            // Nine actions, each spanning one ninth of the bar so the row fills its width.
-            MakeButton(actions, "Library", "Library", 0f / 9f, 1f / 9f, 32, OnToggleLibraryAction);
-            MakeButton(actions, "Place", "Place", 1f / 9f, 2f / 9f, 32, OnPlace);
-            MakeButton(actions, "Power", "Power", 2f / 9f, 3f / 9f, 32, () => { if (_gameManager != null) _gameManager.OnTogglePower(); });
-            MakeButton(actions, "Cancel", "Cancel wire", 3f / 9f, 4f / 9f, 32, () => { if (_gameManager != null) _gameManager.OnCancelWire(); });
-            MakeButton(actions, "Evaluate", "Evaluate", 4f / 9f, 5f / 9f, 32, () => { if (_gameManager != null) _gameManager.OnEvaluate(); });
-            MakeButton(actions, "TruthTable", "Truth table", 5f / 9f, 6f / 9f, 32, OnToggleTruthTable);
-            MakeButton(actions, "Reset", "Reset", 6f / 9f, 7f / 9f, 32, () => { if (_gameManager != null) _gameManager.OnReset(); });
-            MakeButton(actions, "Inspector", "Inspector", 7f / 9f, 8f / 9f, 32, OnToggleInspector);
-            MakeButton(actions, "Help", "Help", 8f / 9f, 9f / 9f, 32, OnToggleTutorial);
+            // Ten actions, each spanning one tenth of the bar so the row fills its width.
+            MakeButton(actions, "Library", "Library", 0f / 10f, 1f / 10f, 28, OnToggleLibraryAction);
+            MakeButton(actions, "Place", "Place", 1f / 10f, 2f / 10f, 28, OnPlace);
+            MakeButton(actions, "Power", "Power", 2f / 10f, 3f / 10f, 28, () => { if (_gameManager != null) _gameManager.OnTogglePower(); });
+            MakeButton(actions, "Cancel", "Cancel wire", 3f / 10f, 4f / 10f, 26, () => { if (_gameManager != null) _gameManager.OnCancelWire(); });
+            MakeButton(actions, "Evaluate", "Evaluate", 4f / 10f, 5f / 10f, 28, () => { if (_gameManager != null) _gameManager.OnEvaluate(); });
+            MakeButton(actions, "TruthTable", "Truth table", 5f / 10f, 6f / 10f, 28, OnToggleTruthTable);
+            MakeButton(actions, "ExpSwitch", "SOP/POS", 6f / 10f, 7f / 10f, 28, () => { if (_gameManager != null) _gameManager.ToggleExperiment(); });
+            MakeButton(actions, "Reset", "Reset", 7f / 10f, 8f / 10f, 28, () => { if (_gameManager != null) _gameManager.OnReset(); });
+            MakeButton(actions, "Inspector", "Inspector", 8f / 10f, 9f / 10f, 28, OnToggleInspector);
+            MakeButton(actions, "Help", "Help", 9f / 10f, 10f / 10f, 28, OnToggleTutorial);
 
             // ---- tutorial
             var tutorialRt = MakePanel(root, "Tutorial", new Vector2(0.06f, 0f), new Vector2(0.94f, 0f),
@@ -509,7 +510,7 @@ namespace ARLab.UI
             go.AddComponent<RowTemplate>();
 
             var title = MakeText(go.transform, "Title", "", 28, TextAnchor.MiddleLeft, color);
-            Place(title.rectTransform, Vector2.zero, Vector2.one, new Vector2(14f, 0f), new Vector2(-14f, 0f));
+            Place(title.rectTransform, new Vector2(0f, 0.45f), Vector2.one, new Vector2(14f, 0f), new Vector2(-14f, 0f));
             // The blurb is a second line inside the same row.
             var sub = MakeText(go.transform, "Sub", "", 22, TextAnchor.MiddleLeft, TextDim);
             Place(sub.rectTransform, new Vector2(0f, 0f), new Vector2(1f, 0.45f), new Vector2(14f, 0f), new Vector2(-14f, 0f));
@@ -708,8 +709,12 @@ namespace ARLab.UI
             // Row prefabs carry a title and a sub-line, so both are filled here.
             var labels = go.GetComponentsInChildren<Text>(true);
             if (labels.Length > 0 && labels[0] != null) labels[0].text = entry.DisplayName;
-            if (labels.Length > 1 && labels[1] != null) labels[1].text = entry.PartNumber;
-            if (labels.Length > 2 && labels[2] != null) labels[2].text = entry.Blurb;
+            if (labels.Length > 1 && labels[1] != null)
+            {
+                labels[1].text = string.IsNullOrEmpty(entry.Blurb)
+                    ? entry.PartNumber
+                    : $"{entry.PartNumber} • {entry.Blurb}";
+            }
         }
 
         // ------------------------------------------------------------------ helpers

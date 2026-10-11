@@ -64,16 +64,8 @@ namespace ARLab.AR
         public bool IsArSupported()
         {
             if (arSession == null) return false;
-            switch (ARSession.state)
-            {
-                case ARSessionState.Ready:
-                case ARSessionState.SessionInitializing:
-                case ARSessionState.SessionTracking:
-                    return true;
-                default:
-                    // In the editor no session subsystem runs, so AR code paths stay reachable.
-                    return Application.isEditor;
-            }
+            if (Application.isEditor) return true;
+            return ARSession.state != ARSessionState.Unsupported;
         }
 
         /// <summary>
@@ -85,7 +77,28 @@ namespace ARLab.AR
             machine.TryTransition(ArAppState.Initializing);
             onStatus?.Invoke(ArStateText.For(ArAppState.Initializing));
 
-            if (!IsArSupported())
+            if (!Application.isEditor && HasActiveLoader())
+            {
+                if (ARSession.state == ARSessionState.None || ARSession.state == ARSessionState.CheckingAvailability)
+                {
+                    yield return ARSession.CheckAvailability();
+                }
+
+                if (ARSession.state == ARSessionState.NeedsInstall)
+                {
+                    onStatus?.Invoke("Installing ARCore services...");
+                    yield return ARSession.Install();
+                }
+
+                if (ARSession.state == ARSessionState.Unsupported)
+                {
+                    Debug.LogError("[AR] Device does not support ARCore.");
+                    onStatus?.Invoke("This device does not support required AR features");
+                    machine.TryTransition(ArAppState.Unsupported);
+                    yield break;
+                }
+            }
+            else if (!IsArSupported())
             {
                 Debug.LogError("[AR] Device does not support ARCore.");
                 onStatus?.Invoke("This device does not support required AR features");

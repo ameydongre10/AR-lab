@@ -80,8 +80,8 @@ namespace ARLab.Simulation
 
             for (int mask = 0; mask < 4; mask++)
             {
-                bool a = (mask & 1) != 0;
-                bool b = (mask & 2) != 0;
+                bool a = (mask & 2) != 0;
+                bool b = (mask & 1) != 0;
 
                 var assignment = new Dictionary<char, bool> { { 'A', a }, { 'B', b } };
                 bool expected = expression.Evaluate(assignment);

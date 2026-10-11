@@ -237,7 +237,7 @@ namespace ARLab.Laboratory
         }
 
         public Vector3 SocketWorldPosition(int column, BreadboardRow row)
-            => transform.TransformPoint(_grid.LocalPositionOf(column, row)) + Vector3.up * 0.002f;
+            => transform.TransformPoint(new Vector3(BreadboardGrid.ColumnX(column), 0.002f, BreadboardGrid.RowY(row)));
 
         /// <summary>World placement for a DIP straddling the trench at a given start column.</summary>
         public Vector3 IcBodyPosition(int startColumn)

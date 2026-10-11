@@ -194,5 +194,48 @@ namespace ARLab.Tests
                 Assert.IsTrue(Eval("A + A'", a, b), $"row {mask} must be 1");
             }
         }
+
+        [Test]
+        public void CanonicalPosIsRendered()
+        {
+            var expr = BooleanExpression.Parse("(A+B)(A'+B')");
+            Assert.IsTrue(expr.IsValid);
+            Assert.AreEqual("(A+B)(A'+B')", expr.ToPos());
+        }
+
+        [Test]
+        public void DeMorganNestedNotExpansion()
+        {
+            // !(A + B) == A'B'
+            Assert.IsTrue(Eval("!(A + B)", false, false));
+            Assert.IsFalse(Eval("!(A + B)", true, false));
+            Assert.IsFalse(Eval("!(A + B)", false, true));
+            Assert.IsFalse(Eval("!(A + B)", true, true));
+
+            // !(AB) == A' + B'
+            Assert.IsTrue(Eval("!(AB)", false, false));
+            Assert.IsTrue(Eval("!(AB)", true, false));
+            Assert.IsTrue(Eval("!(AB)", false, true));
+            Assert.IsFalse(Eval("!(AB)", true, true));
+        }
+
+        [Test]
+        public void ToPosConvertsSopToPosEquivalence()
+        {
+            var sop = BooleanExpression.Parse("A'B + AB'");
+            Assert.IsTrue(sop.IsValid);
+            string posText = sop.ToPos();
+            Assert.IsNotEmpty(posText);
+            var posExpr = BooleanExpression.Parse(posText);
+            Assert.IsTrue(posExpr.IsValid);
+
+            for (int mask = 0; mask < 4; mask++)
+            {
+                bool a = (mask & 2) != 0;
+                bool b = (mask & 1) != 0;
+                var assign = new Dictionary<char, bool> { { 'A', a }, { 'B', b } };
+                Assert.AreEqual(sop.Evaluate(assign), posExpr.Evaluate(assign), $"Row mask {mask} must evaluate identically");
+            }
+        }
     }
 }

@@ -32,7 +32,7 @@ namespace ARLab.Tests
         [TearDown]
         public void TearDown()
         {
-            if (_root != null) Object.DestroyImmediate(_root);
+            if (_root != null) UnityEngine.Object.DestroyImmediate(_root);
         }
 
         private static void EventBusReset() => ARLab.Core.EventBus.Clear();

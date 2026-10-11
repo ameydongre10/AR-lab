@@ -23,11 +23,11 @@ namespace ARLab.Laboratory
         /// <see cref="Object.Destroy"/> is illegal in edit mode, so the same factory can be
         /// driven from editor tooling, tests and play mode without branching at every call.
         /// </summary>
-        private static void Discard(Object o)
+        private static void Discard(UnityEngine.Object o)
         {
             if (o == null) return;
-            if (Application.isPlaying) Object.Destroy(o);
-            else Object.DestroyImmediate(o);
+            if (Application.isPlaying) UnityEngine.Object.Destroy(o);
+            else UnityEngine.Object.DestroyImmediate(o);
         }
 
         private static GameObject Box(Transform parent, string name, Vector3 pos, Vector3 scale, Material mat)
@@ -77,7 +77,7 @@ namespace ARLab.Laboratory
             go.transform.localPosition = localPos;
 
             var col = go.AddComponent<SphereCollider>();
-            col.radius = 0.9f;
+            col.radius = 0.0012f;
             col.isTrigger = true;
 
             Cyl(go.transform, "Body", Vector3.zero, new Vector3(PinRadius * 2f, PinRadius * 1.2f, PinRadius * 2f),

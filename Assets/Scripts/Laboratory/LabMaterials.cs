@@ -19,11 +19,11 @@ namespace ARLab.Laboratory
         /// builds most of its scene from code that also runs in editor tooling and tests, so
         /// the mode-aware form is the one callers should use.
         /// </summary>
-        public static void Discard(Object o)
+        public static void Discard(UnityEngine.Object o)
         {
             if (o == null) return;
-            if (Application.isPlaying) Object.Destroy(o);
-            else Object.DestroyImmediate(o);
+            if (Application.isPlaying) UnityEngine.Object.Destroy(o);
+            else UnityEngine.Object.DestroyImmediate(o);
         }
 
         private static Shader FindShader(params string[] names)
@@ -102,6 +102,10 @@ namespace ARLab.Laboratory
         /// </summary>
         public static Material TransparentOverlay(Color c, float alpha)
         {
+            Color tinted = c;
+            tinted.a = alpha;
+            if (_overlayCache.TryGetValue(tinted, out Material cached)) return cached;
+
             Shader shader = FindShader("Universal Render Pipeline/Unlit", "Unlit/Transparent", "Sprites/Default", "Unlit/Color");
             var m = new Material(shader) { name = "LabOverlay" };
 
@@ -113,8 +117,6 @@ namespace ARLab.Laboratory
             if (m.HasProperty("_AlphaClip")) m.SetFloat("_AlphaClip", 0f);
             if (m.HasProperty("_Cull")) m.SetFloat("_Cull", (float)UnityEngine.Rendering.CullMode.Off);
 
-            Color tinted = c;
-            tinted.a = alpha;
             if (m.HasProperty("_BaseColor")) m.SetColor("_BaseColor", tinted);
             if (m.HasProperty("_Color")) m.SetColor("_Color", tinted);
 
@@ -123,10 +125,6 @@ namespace ARLab.Laboratory
             m.DisableKeyword("_ALPHAPREMULTIPLY_ON");
             m.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
 
-            // Overlays are asked for repeatedly (reticle, plane visual) and are read-only, so
-            // one instance per colour is enough. Caching also keeps the material out of any
-            // scene it is created while, rather than leaking an asset per call.
-            if (_overlayCache.TryGetValue(tinted, out Material cached)) return cached;
             _overlayCache[tinted] = m;
             return m;
         }

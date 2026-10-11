@@ -162,9 +162,51 @@ namespace ARLab.Laboratory
             _components.Add(comp);
             _sim.Register(comp);
 
+            if (comp is IcComponent ic && breadboard != null)
+            {
+                int startCol = 10;
+                Vector3 local = breadboard.transform.InverseTransformPoint(worldPosition);
+                int targetCol = Mathf.RoundToInt((local.x - BreadboardGrid.RowPitch * 3f) / BreadboardGrid.RowPitch);
+                if (targetCol >= 2 && targetCol <= breadboard.Columns - 8)
+                {
+                    startCol = targetCol;
+                }
+                else
+                {
+                    int icIndex = 0;
+                    for (int i = 0; i < _components.Count; i++)
+                    {
+                        if (_components[i] is IcComponent && !ReferenceEquals(_components[i], ic))
+                            icIndex++;
+                    }
+                    startCol = Mathf.Clamp(10 + icIndex * 12, 2, breadboard.Columns - 8);
+                }
+                SeatIc(ic, startCol);
+            }
+
             EventBus.Publish(new ComponentAddedEvent(comp));
             SolveAndRefresh();
             return comp;
+        }
+
+        public void SeatIc(IcComponent ic, int startColumn)
+        {
+            if (breadboard == null || ic == null) return;
+            _graph.RemoveTiesByRef(ic);
+
+            ic.Transform.position = breadboard.IcBodyPosition(startColumn);
+            ic.Transform.rotation = breadboard.transform.rotation;
+
+            for (int p = 1; p <= 14; p++)
+            {
+                ComponentPin pin = ic.Pin(p);
+                if (pin != null && pin.IsConnectable)
+                {
+                    breadboard.Grid.IcsPinPlacement(startColumn, p, out int col, out BreadboardRow row);
+                    int socketTerm = breadboard.Grid.TerminalAt(col, row);
+                    _graph.AddTie(pin.TerminalId, socketTerm, ConnectionKind.BreadboardTie, ic);
+                }
+            }
         }
 
         /// <summary>Next free A, B, C... label so multiple switches stay distinguishable.</summary>
@@ -200,6 +242,7 @@ namespace ARLab.Laboratory
                 }
             }
 
+            _graph.RemoveTiesByRef(comp);
             _components.Remove(comp);
             _sim?.Unregister(comp);
             comp.Unregister(_graph);
