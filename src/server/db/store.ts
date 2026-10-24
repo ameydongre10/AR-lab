@@ -7,8 +7,13 @@ import { v4 as uuidv4 } from 'uuid';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const DATA_DIR = path.resolve(__dirname, '../../../data');
+
+const isVercel = Boolean(process.env.VERCEL);
+const DATA_DIR = isVercel
+  ? path.join('/tmp', 'ar-lab-data')
+  : path.resolve(__dirname, '../../../data');
 const DB_FILE = path.join(DATA_DIR, 'ar-lab-db.json');
+const BUNDLED_DB_FILE = path.resolve(__dirname, '../../../data/ar-lab-db.json');
 
 export class DatabaseStore {
   private static instance: DatabaseStore;
@@ -28,8 +33,12 @@ export class DatabaseStore {
   }
 
   private ensureDataDirectory() {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
+    try {
+      if (!fs.existsSync(DATA_DIR)) {
+        fs.mkdirSync(DATA_DIR, { recursive: true });
+      }
+    } catch (err) {
+      console.warn('Could not create data directory:', err);
     }
   }
 
@@ -39,19 +48,33 @@ export class DatabaseStore {
         const raw = fs.readFileSync(DB_FILE, 'utf-8');
         return JSON.parse(raw);
       }
+      if (isVercel && fs.existsSync(BUNDLED_DB_FILE)) {
+        const raw = fs.readFileSync(BUNDLED_DB_FILE, 'utf-8');
+        const parsed = JSON.parse(raw);
+        this.persistSync(parsed);
+        return parsed;
+      }
     } catch (err) {
       console.warn('Failed to parse existing DB file, re-seeding default database:', err);
     }
 
     const seed = getInitialSeedData();
-    this.persistSync(seed);
+    try {
+      this.persistSync(seed);
+    } catch (err) {
+      console.warn('Could not persist seed data to disk, running with in-memory state:', err);
+    }
     return seed;
   }
 
   private persistSync(data: DatabaseSchema) {
-    const tempFile = `${DB_FILE}.tmp.${Date.now()}`;
-    fs.writeFileSync(tempFile, JSON.stringify(data, null, 2), 'utf-8');
-    fs.renameSync(tempFile, DB_FILE);
+    try {
+      const tempFile = `${DB_FILE}.tmp.${Date.now()}`;
+      fs.writeFileSync(tempFile, JSON.stringify(data, null, 2), 'utf-8');
+      fs.renameSync(tempFile, DB_FILE);
+    } catch (err) {
+      console.warn('Sync write error (in-memory fallback active):', err);
+    }
   }
 
   public async persist(): Promise<void> {
@@ -61,6 +84,8 @@ export class DatabaseStore {
       const tempFile = `${DB_FILE}.tmp.${Date.now()}`;
       await fs.promises.writeFile(tempFile, JSON.stringify(this.data, null, 2), 'utf-8');
       await fs.promises.rename(tempFile, DB_FILE);
+    } catch (err) {
+      console.warn('Disk persist warning (in-memory state active):', err);
     } finally {
       this.isWriting = false;
     }

@@ -39,27 +39,29 @@ app.use('/models', express.static(path.join(publicDir, 'models'), {
   }
 }));
 
-// API Router
+// API Router (mount on both /api and root for Vercel serverless compatibility)
 app.use('/api', apiRouter);
+app.use('/', apiRouter);
 
-// Serve built frontend files in production
+// Serve built frontend files in production (only if not on Vercel serverless)
 const clientBuildDir = path.resolve(__dirname, '../client');
-app.use(express.static(clientBuildDir));
+if (!process.env.VERCEL) {
+  app.use(express.static(clientBuildDir));
 
-// SPA fallback for frontend routes (only if not an API route)
-app.use((req: Request, res: Response, next: NextFunction) => {
-  if (req.method === 'GET' && !req.path.startsWith('/api') && !req.path.includes('.')) {
-    const indexPath = path.join(clientBuildDir, 'index.html');
-    res.sendFile(indexPath, (err) => {
-      if (err) {
-        // In dev mode when client is served by Vite on :3000
-        res.status(200).send(`AR Lab API Server running. Open frontend on port 3000 in dev mode.`);
-      }
-    });
-  } else {
-    next();
-  }
-});
+  // SPA fallback for frontend routes (only if not an API route)
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    if (req.method === 'GET' && !req.path.startsWith('/api') && !req.path.includes('.')) {
+      const indexPath = path.join(clientBuildDir, 'index.html');
+      res.sendFile(indexPath, (err) => {
+        if (err) {
+          res.status(200).send(`AR Lab API Server running. Open frontend on port 3000 in dev mode.`);
+        }
+      });
+    } else {
+      next();
+    }
+  });
+}
 
 // Centralized error handler
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
@@ -70,12 +72,15 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`==================================================`);
-  console.log(`  AR Lab Platform Server listening on port ${PORT}`);
-  console.log(`  Health Check: http://localhost:${PORT}/api/health`);
-  console.log(`  API Root:     http://localhost:${PORT}/api`);
-  console.log(`==================================================`);
-});
+// Only listen if not running in Vercel serverless environment or test mode
+if (!process.env.VERCEL && process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => {
+    console.log(`==================================================`);
+    console.log(`  AR Lab Platform Server listening on port ${PORT}`);
+    console.log(`  Health Check: http://localhost:${PORT}/api/health`);
+    console.log(`  API Root:     http://localhost:${PORT}/api`);
+    console.log(`==================================================`);
+  });
+}
 
 export default app;

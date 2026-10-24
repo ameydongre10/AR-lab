@@ -6,9 +6,9 @@
   "main": "dist/server/index.js",
   "scripts": {
     "dev": "tsx watch src/server/index.ts",
-    "build:client": "vite build",
+    "build:client": "node scripts/generate3dAssets.js && vite build",
     "build:server": "esbuild src/server/index.ts --bundle --platform=node --format=esm --packages=external --outfile=dist/server/index.js",
-    "build": "vite build && esbuild src/server/index.ts --bundle --platform=node --format=esm --packages=external --outfile=dist/server/index.js",
+    "build": "node scripts/generate3dAssets.js && vite build && esbuild src/server/index.ts --bundle --platform=node --format=esm --packages=external --outfile=dist/server/index.js",
     "start": "node dist/server/index.js",
     "test": "tsx --test tests/logic.test.js tests/api.test.js tests/server.test.js",
     "test:unity": "dotnet .github/workflows/support/bin/Debug/net9.0/CiRunner.dll",
