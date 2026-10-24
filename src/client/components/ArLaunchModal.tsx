@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import QRCode from 'qrcode';
 import { X, Smartphone, Camera, QrCode, Sparkles, CheckCircle2, AlertTriangle, ExternalLink } from 'lucide-react';
+import { getAssetUrl } from '../services/assetUtils.ts';
 
 interface ArLaunchModalProps {
   isOpen: boolean;
@@ -53,6 +54,8 @@ export const ArLaunchModal: React.FC<ArLaunchModalProps> = ({
   const handleNativeArLaunch = () => {
     const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
     const isAndroid = /Android/i.test(navigator.userAgent);
+    const resolvedUrl = getAssetUrl(modelUrl);
+    const fullAssetUrl = new URL(resolvedUrl, window.location.href).href;
 
     setLaunchStatus('Initializing camera & spatial tracking...');
 
@@ -60,11 +63,10 @@ export const ArLaunchModal: React.FC<ArLaunchModalProps> = ({
       // iOS Quick Look AR anchor
       const anchor = document.createElement('a');
       anchor.setAttribute('rel', 'ar');
-      anchor.setAttribute('href', modelUrl);
+      anchor.setAttribute('href', fullAssetUrl);
       anchor.click();
     } else if (isAndroid) {
       // Android Scene Viewer Intent
-      const fullAssetUrl = new URL(modelUrl, window.location.origin).href;
       const sceneViewerUrl = `intent://arvr.google.com/scene-viewer/1.0?file=${encodeURIComponent(
         fullAssetUrl
       )}&mode=ar_preferred#Intent;scheme=https;package=com.google.android.googlequicksearchbox;action=android.intent.action.VIEW;S.browser_fallback_url=${encodeURIComponent(
