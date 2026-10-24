@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: ar-lab-platform
+    env: node
+    plan: free
+    buildCommand: npm install --legacy-peer-deps && npm run generate:models && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+    disk:
+      name: ar-lab-data
+      mountPath: /app/data
+      sizeGB: 1
+    healthCheckPath: /api/health
