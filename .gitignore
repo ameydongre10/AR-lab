@@ -44,3 +44,14 @@ keystore.properties
 # OS clutter
 .DS_Store
 Thumbs.db
+
+# Node.js & Web Platform
+node_modules/
+dist/
+.env
+.env.local
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+data/*.tmp.*

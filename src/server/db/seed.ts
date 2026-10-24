@@ -1,0 +1,333 @@
+import type { DatabaseSchema } from './schema.ts';
+import { BooleanExpression } from '../../shared/booleanExpression.ts';
+
+export function getInitialSeedData(): DatabaseSchema {
+  const xorSopExpr = BooleanExpression.parse("A'B + AB'");
+  const xorPosExpr = BooleanExpression.parse("(A+B)(A'+B')");
+  const deMorganExpr = BooleanExpression.parse("A'B'");
+  const halfAdderExpr = BooleanExpression.parse("A'B + AB'");
+  const muxExpr = BooleanExpression.parse("S'A + SB");
+  const majorityExpr = BooleanExpression.parse("AB + BC + AC");
+
+  const now = new Date().toISOString();
+
+  return {
+    categories: [
+      {
+        id: 'cat-combinational',
+        name: 'Combinational Logic',
+        slug: 'combinational-logic',
+        description: 'Circuits whose outputs depend strictly on the instantaneous combination of primary inputs.',
+        icon: 'Cpu',
+        color: 'cyan',
+        createdAt: now,
+        updatedAt: now
+      },
+      {
+        id: 'cat-canonical',
+        name: 'SOP & POS Normal Forms',
+        slug: 'sop-pos-forms',
+        description: 'Implementation and algebraic verification of Sum-of-Products and Product-of-Sums standard forms.',
+        icon: 'Layers',
+        color: 'emerald',
+        createdAt: now,
+        updatedAt: now
+      },
+      {
+        id: 'cat-arithmetic',
+        name: 'Arithmetic Circuits',
+        slug: 'arithmetic-circuits',
+        description: 'Binary adders, subtractors, and arithmetic execution units built from fundamental gates.',
+        icon: 'Calculator',
+        color: 'amber',
+        createdAt: now,
+        updatedAt: now
+      },
+      {
+        id: 'cat-routing',
+        name: 'Data Routing & Muxes',
+        slug: 'data-routing',
+        description: 'Multiplexers, decoders, and data selection units for bus routing.',
+        icon: 'GitBranch',
+        color: 'purple',
+        createdAt: now,
+        updatedAt: now
+      }
+    ],
+
+    models: [
+      {
+        id: 'mod-ar-station',
+        name: 'AR Lab Workbench Rig',
+        description: 'Complete spatial electronics laboratory bench with breadboard, power rails, ICs, and jumper wires.',
+        format: 'glb',
+        fileUrl: '/models/ar-lab-station.glb',
+        posterUrl: '/posters/ar-station.png',
+        polyCount: 1420,
+        scale: 1.0,
+        arPlacement: 'table',
+        dimensions: { width: 0.56, height: 0.12, depth: 0.34 },
+        createdAt: now,
+        updatedAt: now
+      },
+      {
+        id: 'mod-breadboard',
+        name: 'Full-Size Solderless Breadboard',
+        description: 'Standard 830-tie-point solderless breadboard with dual split power rails and DIP center trough.',
+        format: 'glb',
+        fileUrl: '/models/breadboard.glb',
+        posterUrl: '/posters/breadboard.png',
+        polyCount: 680,
+        scale: 1.0,
+        arPlacement: 'table',
+        dimensions: { width: 0.42, height: 0.02, depth: 0.16 },
+        createdAt: now,
+        updatedAt: now
+      },
+      {
+        id: 'mod-ic-7404',
+        name: 'SN7404 Hex Inverter DIP-14',
+        description: 'Standard TTL integrated circuit containing six independent NOT inverter gates.',
+        format: 'glb',
+        fileUrl: '/models/ic-7404.glb',
+        posterUrl: '/posters/ic-7404.png',
+        polyCount: 320,
+        scale: 1.0,
+        arPlacement: 'table',
+        dimensions: { width: 0.19, height: 0.06, depth: 0.07 },
+        createdAt: now,
+        updatedAt: now
+      },
+      {
+        id: 'mod-ic-7408',
+        name: 'SN7408 Quad 2-Input AND Gate',
+        description: 'Standard TTL integrated circuit containing four independent positive logic 2-input AND gates.',
+        format: 'glb',
+        fileUrl: '/models/ic-7408.glb',
+        posterUrl: '/posters/ic-7408.png',
+        polyCount: 320,
+        scale: 1.0,
+        arPlacement: 'table',
+        dimensions: { width: 0.19, height: 0.06, depth: 0.07 },
+        createdAt: now,
+        updatedAt: now
+      },
+      {
+        id: 'mod-ic-7432',
+        name: 'SN7432 Quad 2-Input OR Gate',
+        description: 'Standard TTL integrated circuit containing four independent positive logic 2-input OR gates.',
+        format: 'glb',
+        fileUrl: '/models/ic-7432.glb',
+        posterUrl: '/posters/ic-7432.png',
+        polyCount: 320,
+        scale: 1.0,
+        arPlacement: 'table',
+        dimensions: { width: 0.19, height: 0.06, depth: 0.07 },
+        createdAt: now,
+        updatedAt: now
+      }
+    ],
+
+    experiments: [
+      {
+        id: 'exp-xor-sop',
+        title: 'Boolean Function in SOP Form: F = A\'B + AB\'',
+        description: 'Construct and verify a 2-input Exclusive-OR (XOR) logic circuit implemented strictly in canonical Sum-of-Products (SOP) form using TTL inverters, AND gates, and OR gates.',
+        categoryId: 'cat-canonical',
+        targetExpression: "A'B + AB'",
+        canonicalForm: 'SOP',
+        difficulty: 'Beginner',
+        requiredIcs: ['7404', '7408', '7432'],
+        defaultInputs: ['A', 'B'],
+        instructions: [
+          {
+            step: 1,
+            title: 'Place and Seat IC Packages',
+            details: 'Seat the 7404 (Hex Inverter), 7408 (Quad AND), and 7432 (Quad OR) across the breadboard center trough with pin 1 oriented left.',
+            wiringTips: 'Ensure DIP pins seat firmly into column sockets on rows E and F.'
+          },
+          {
+            step: 2,
+            title: 'Connect DC Power Rails',
+            details: 'Wire Pin 14 of all three ICs to the +5V red power rail. Wire Pin 7 of all three ICs to the GND blue power rail.',
+            wiringTips: 'Floating power pins cause gates to output Undefined (X).'
+          },
+          {
+            step: 3,
+            title: 'Form Min-Terms A\'B and AB\'',
+            details: 'Invert input A using 7404 (Pin 1 to Pin 2). Connect inverted A (Pin 2) and Input B to 7408 Gate 1 (Pins 1 & 2). Connect Input A and inverted B to 7408 Gate 2 (Pins 4 & 5).',
+            wiringTips: 'Check output pin 3 and 6 of the 7408 chip for intermediate term outputs.'
+          },
+          {
+            step: 4,
+            title: 'Sum the Products',
+            details: 'Feed the outputs of Gate 1 (Pin 3) and Gate 2 (Pin 6) into 7432 OR Gate 1 (Pins 1 & 2). Connect the final output (Pin 3) to the Logic Indicator LED.',
+            wiringTips: 'The LED illuminates when inputs A and B differ (01 or 10).'
+          }
+        ],
+        modelAssetId: 'mod-ar-station',
+        truthTableTarget: xorSopExpr.generateTruthTable(['A', 'B']),
+        isPublished: true,
+        createdAt: now,
+        updatedAt: now
+      },
+      {
+        id: 'exp-xor-pos',
+        title: 'Boolean Function in POS Form: F = (A + B)(A\' + B\')',
+        description: 'Implement the identical XOR truth table using canonical Product-of-Sums (POS) form and verify gate-level equivalence with the SOP implementation.',
+        categoryId: 'cat-canonical',
+        targetExpression: "(A+B)(A'+B')",
+        canonicalForm: 'POS',
+        difficulty: 'Intermediate',
+        requiredIcs: ['7404', '7408', '7432'],
+        defaultInputs: ['A', 'B'],
+        instructions: [
+          {
+            step: 1,
+            title: 'Form Max-Terms (A + B) and (A\' + B\')',
+            details: 'Connect Input A and Input B directly to 7432 OR Gate 1. Invert both inputs using 7404, then connect to 7432 OR Gate 2.',
+            wiringTips: 'Both maxterms evaluate to 0 for invalid parity states.'
+          },
+          {
+            step: 2,
+            title: 'Multiply the Sums',
+            details: 'Wire the outputs of both OR gates into 7408 AND Gate 1 (Pins 1 & 2). Output Pin 3 drives the indicator LED.',
+            wiringTips: 'Verify output agrees row-by-row with the SOP experiment.'
+          }
+        ],
+        modelAssetId: 'mod-ar-station',
+        truthTableTarget: xorPosExpr.generateTruthTable(['A', 'B']),
+        isPublished: true,
+        createdAt: now,
+        updatedAt: now
+      },
+      {
+        id: 'exp-demorgan',
+        title: "De Morgan's First Law: (A + B)' = A'B'",
+        description: "Prove algebraically and experimentally that the NOR function (A+B)' is equivalent to the conjunction of complemented literals A'B'.",
+        categoryId: 'cat-combinational',
+        targetExpression: "A'B'",
+        canonicalForm: 'SOP',
+        difficulty: 'Beginner',
+        requiredIcs: ['7404', '7408'],
+        defaultInputs: ['A', 'B'],
+        instructions: [
+          {
+            step: 1,
+            title: 'Invert Both Primary Inputs',
+            details: 'Route Input A through 7404 Gate 1 and Input B through 7404 Gate 2.',
+            wiringTips: 'Measure pin 2 and pin 4 to ensure clean inverted levels.'
+          },
+          {
+            step: 2,
+            title: 'Conjoin Inverted Signals',
+            details: 'Wire Pin 2 and Pin 4 of the 7404 into Pin 1 and Pin 2 of the 7408 AND gate. Read output at Pin 3.',
+            wiringTips: 'Output is HIGH only when both A and B are 0 (00 condition).'
+          }
+        ],
+        modelAssetId: 'mod-ic-7408',
+        truthTableTarget: deMorganExpr.generateTruthTable(['A', 'B']),
+        isPublished: true,
+        createdAt: now,
+        updatedAt: now
+      },
+      {
+        id: 'exp-half-adder',
+        title: 'Binary Half Adder (Sum & Carry Generator)',
+        description: 'Construct a half adder computing binary arithmetic sum (A XOR B) and carry bit (A AND B) simultaneously.',
+        categoryId: 'cat-arithmetic',
+        targetExpression: "A'B + AB'",
+        canonicalForm: 'SOP',
+        difficulty: 'Intermediate',
+        requiredIcs: ['7404', '7408', '7432'],
+        defaultInputs: ['A', 'B'],
+        instructions: [
+          {
+            step: 1,
+            title: 'Generate Sum Bit',
+            details: 'Synthesize XOR logic using SOP form for the Sum output terminal.',
+            wiringTips: 'Sum represents bit 0 of the arithmetic addition.'
+          },
+          {
+            step: 2,
+            title: 'Generate Carry Bit',
+            details: 'Tap Input A and Input B directly into an unused 7408 AND gate for the Carry output terminal.',
+            wiringTips: 'Carry goes HIGH only on input 11 (binary 1 + 1 = 10).'
+          }
+        ],
+        modelAssetId: 'mod-ar-station',
+        truthTableTarget: halfAdderExpr.generateTruthTable(['A', 'B']),
+        isPublished: true,
+        createdAt: now,
+        updatedAt: now
+      },
+      {
+        id: 'exp-mux',
+        title: '2-to-1 Multiplexer (Data Selector: Y = S\'A + SB)',
+        description: 'Construct a multiplexer where selector signal S directs data from either channel A (when S=0) or channel B (when S=1) to single output Y.',
+        categoryId: 'cat-routing',
+        targetExpression: "S'A + SB",
+        canonicalForm: 'SOP',
+        difficulty: 'Advanced',
+        requiredIcs: ['7404', '7408', '7432'],
+        defaultInputs: ['S', 'A', 'B'],
+        instructions: [
+          {
+            step: 1,
+            title: 'Connect Select Inversion',
+            details: 'Wire Selector S through 7404 inverter. Use S\' to gate channel A and S to gate channel B.',
+            wiringTips: 'This prevents bus contention between channel A and B.'
+          },
+          {
+            step: 2,
+            title: 'Combine Channels',
+            details: 'OR the two gated products together with 7432. Connect output to LED.',
+            wiringTips: 'Toggle S to verify which input channel passes to output.'
+          }
+        ],
+        modelAssetId: 'mod-breadboard',
+        truthTableTarget: muxExpr.generateTruthTable(['S', 'A', 'B']),
+        isPublished: true,
+        createdAt: now,
+        updatedAt: now
+      }
+    ],
+
+    sessions: [
+      {
+        id: 'sess-demo-1',
+        experimentId: 'exp-xor-sop',
+        studentName: 'Alex Rivera (Engineering Lab)',
+        netlistState: { powerOn: true, icCount: 3, wires: 12 },
+        truthTableResults: [
+          { binary: '00', inputs: { A: false, B: false }, expected: false, actual: false, passed: true },
+          { binary: '01', inputs: { A: false, B: true }, expected: true, actual: true, passed: true },
+          { binary: '10', inputs: { A: true, B: false }, expected: true, actual: true, passed: true },
+          { binary: '11', inputs: { A: true, B: true }, expected: false, actual: false, passed: true }
+        ],
+        passRate: 100,
+        isVerified: true,
+        notes: 'Verified canonical SOP implementation with zero floating terminals.',
+        createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
+        updatedAt: new Date(Date.now() - 3600000 * 2).toISOString()
+      },
+      {
+        id: 'sess-demo-2',
+        experimentId: 'exp-xor-pos',
+        studentName: 'Jordan Chen (Digital Systems)',
+        netlistState: { powerOn: true, icCount: 3, wires: 10 },
+        truthTableResults: [
+          { binary: '00', inputs: { A: false, B: false }, expected: false, actual: false, passed: true },
+          { binary: '01', inputs: { A: false, B: true }, expected: true, actual: true, passed: true },
+          { binary: '10', inputs: { A: true, B: false }, expected: true, actual: true, passed: true },
+          { binary: '11', inputs: { A: true, B: true }, expected: false, actual: false, passed: true }
+        ],
+        passRate: 100,
+        isVerified: true,
+        notes: 'Verified POS equivalence to SOP XOR form.',
+        createdAt: new Date(Date.now() - 3600000 * 6).toISOString(),
+        updatedAt: new Date(Date.now() - 3600000 * 6).toISOString()
+      }
+    ]
+  };
+}
