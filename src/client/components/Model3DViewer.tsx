@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { RotateCw, ZoomIn, ZoomOut, Maximize2, RefreshCw, AlertCircle, Sparkles } from 'lucide-react';
+import { getAssetUrl } from '../services/assetUtils.ts';
 
 interface Model3DViewerProps {
   modelUrl: string;
@@ -25,6 +26,9 @@ export const Model3DViewer: React.FC<Model3DViewerProps> = ({
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isAutoRotating, setIsAutoRotating] = useState(autoRotate);
   const [progress, setProgress] = useState(0);
+
+  const resolvedModelUrl = getAssetUrl(modelUrl);
+  const resolvedPosterUrl = posterUrl ? getAssetUrl(posterUrl) : undefined;
 
   useEffect(() => {
     const viewer = viewerRef.current;
@@ -99,8 +103,8 @@ export const Model3DViewer: React.FC<Model3DViewerProps> = ({
       {/* @ts-ignore */}
       <model-viewer
         ref={viewerRef}
-        src={modelUrl}
-        poster={posterUrl}
+        src={resolvedModelUrl}
+        poster={resolvedPosterUrl}
         alt={altText}
         ar
         ar-modes="webxr scene-viewer quick-look"
