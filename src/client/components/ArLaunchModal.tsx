@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import QRCode from 'qrcode';
-import { X, Smartphone, Camera, QrCode, Sparkles, CheckCircle2, AlertTriangle, ExternalLink } from 'lucide-react';
+import { X, Smartphone, Camera, QrCode, CheckCircle2, AlertTriangle, ExternalLink, Compass } from 'lucide-react';
 import { getAssetUrl } from '../services/assetUtils.ts';
 
 interface ArLaunchModalProps {
@@ -41,8 +41,8 @@ export const ArLaunchModal: React.FC<ArLaunchModalProps> = ({
       width: 240,
       margin: 1.5,
       color: {
-        dark: '#0f172a',
-        light: '#ffffff'
+        dark: '#0c0e14',
+        light: '#f4f6fa'
       }
     })
       .then(url => setQrDataUrl(url))
@@ -57,7 +57,7 @@ export const ArLaunchModal: React.FC<ArLaunchModalProps> = ({
     const resolvedUrl = getAssetUrl(modelUrl);
     const fullAssetUrl = new URL(resolvedUrl, window.location.href).href;
 
-    setLaunchStatus('Initializing camera & spatial tracking...');
+    setLaunchStatus('Initiating spatial camera calibration & plane detection...');
 
     if (isIOS) {
       // iOS Quick Look AR anchor
@@ -78,117 +78,123 @@ export const ArLaunchModal: React.FC<ArLaunchModalProps> = ({
       const mv = document.querySelector('model-viewer') as any;
       if (mv && mv.activateAR) {
         mv.activateAR().catch((err: any) => {
-          setLaunchStatus(`AR launch notice: ${err.message || 'Please use an AR-compatible mobile browser.'}`);
+          setLaunchStatus(`AR Notice: ${err.message || 'Please use an ARKit / ARCore enabled mobile device.'}`);
         });
       } else {
-        setLaunchStatus('Desktop browser detected: Please scan the QR code with your mobile device.');
+        setLaunchStatus('Desktop telemetry: Scan the optical QR target below with an iOS or Android smartphone.');
       }
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in">
-      <div className="relative w-full max-w-lg bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl overflow-hidden">
-        {/* Glow ambient background */}
-        <div className="absolute -top-24 -left-24 w-48 h-48 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
-        <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#050609]/80 backdrop-blur-sm">
+      <div className="relative w-full max-w-lg bg-[#0e1017] border border-[#262c3e] rounded-xl p-6 sm:p-7 shadow-2xl overflow-hidden">
+        
+        {/* Corner Reticle Accents */}
+        <div className="absolute top-2 left-2 text-[8px] font-mono text-[#424b61]">+ CALIB_A1</div>
+        <div className="absolute bottom-2 right-2 text-[8px] font-mono text-[#424b61]">+ CALIB_B2</div>
 
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 p-2 text-slate-400 hover:text-white bg-slate-800/60 hover:bg-slate-800 rounded-full transition-colors"
+          className="btn-tactile absolute top-4 right-4 p-1.5 text-[#737c94] hover:text-white bg-[#161824] hover:bg-[#1d2130] border border-[#272d3f] rounded-lg transition-colors cursor-pointer"
         >
-          <X className="w-5 h-5" />
+          <X className="w-4 h-4" />
         </button>
 
         {/* Modal Header */}
-        <div className="flex items-center gap-3 mb-5">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-cyan-500/20">
-            <Sparkles className="w-5 h-5" />
+        <div className="space-y-1 mb-5">
+          <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#151824] border border-[#282f42] text-[10px] font-mono text-emerald-400">
+            <Compass className="w-3 h-3 text-emerald-400" />
+            <span>OPTICAL SPATIAL ALIGNMENT</span>
           </div>
-          <div>
-            <h3 className="text-xl font-bold text-white tracking-tight">Launch Augmented Reality</h3>
-            <p className="text-xs text-slate-400 font-mono mt-0.5">{modelTitle}</p>
-          </div>
+          <h3 className="text-xl font-bold font-mono text-white tracking-tight">
+            Launch AR Workbench
+          </h3>
+          <p className="text-xs text-[#828c9f]">
+            Target asset: <span className="text-white font-mono">{modelTitle}</span>
+          </p>
         </div>
 
-        {/* Content based on Device */}
-        {isMobile ? (
-          <div className="space-y-4">
-            <div className="p-4 bg-cyan-500/10 border border-cyan-500/30 rounded-2xl">
-              <div className="flex items-start gap-3">
-                <Smartphone className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="text-sm font-semibold text-cyan-200">Mobile Device Detected</h4>
-                  <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-                    Camera permissions will be requested to track a horizontal surface (tabletop or floor) and overlay the virtual digital electronics circuit into your physical room.
-                  </p>
+        {/* Status Alert if triggered */}
+        {launchStatus && (
+          <div className="mb-4 p-3 rounded-lg bg-[#151722] border border-blue-500/30 text-xs font-mono text-blue-300 flex items-start gap-2">
+            <CheckCircle2 className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+            <span>{launchStatus}</span>
+          </div>
+        )}
+
+        {/* Dual Layout: Direct Launch (Mobile) or QR Optical Target (Desktop) */}
+        <div className="grid grid-cols-1 sm:grid-cols-12 gap-5 items-center">
+          
+          {/* QR Target View */}
+          <div className="sm:col-span-6 flex flex-col items-center">
+            <div className="p-3 bg-white rounded-lg border border-[#3b4256] shadow-md relative">
+              {/* Corner crosshairs */}
+              <div className="absolute -top-1 -left-1 w-2.5 h-2.5 border-t-2 border-l-2 border-emerald-500"></div>
+              <div className="absolute -top-1 -right-1 w-2.5 h-2.5 border-t-2 border-r-2 border-emerald-500"></div>
+              <div className="absolute -bottom-1 -left-1 w-2.5 h-2.5 border-b-2 border-l-2 border-emerald-500"></div>
+              <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 border-b-2 border-r-2 border-emerald-500"></div>
+
+              {qrDataUrl ? (
+                <img src={qrDataUrl} alt="AR Quick Launch Optical Target" className="w-40 h-40 object-contain" />
+              ) : (
+                <div className="w-40 h-40 flex items-center justify-center text-xs font-mono text-[#5b637a]">
+                  Generating Target...
                 </div>
+              )}
+            </div>
+            <div className="text-[10px] font-mono text-[#6e7790] mt-2 text-center">
+              SCAN WITH SMARTPHONE CAMERA
+            </div>
+          </div>
+
+          {/* Device Capabilities & Direct Launch */}
+          <div className="sm:col-span-6 space-y-3 font-mono">
+            <div className="space-y-1.5 text-xs">
+              <div className="text-[10px] text-[#717a92] uppercase font-bold tracking-wider">
+                SUBSYSTEM READINESS
+              </div>
+              
+              <div className="flex items-center justify-between p-2 rounded bg-[#13151f] border border-[#202535]">
+                <span className="text-[#a1abcb]">WebXR Immersive</span>
+                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                  hasWebXR ? 'bg-emerald-500/20 text-emerald-400' : 'bg-[#1c1f2b] text-[#768098]'
+                }`}>
+                  {hasWebXR ? 'SUPPORTED' : 'STANDBY'}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between p-2 rounded bg-[#13151f] border border-[#202535]">
+                <span className="text-[#a1abcb]">Platform Profile</span>
+                <span className="text-[10px] font-bold text-white">
+                  {isMobile ? 'MOBILE AR' : 'WORKSTATION'}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between p-2 rounded bg-[#13151f] border border-[#202535]">
+                <span className="text-[#a1abcb]">Coordinate Anchor</span>
+                <span className="text-[10px] font-bold text-emerald-400">
+                  HORIZONTAL PLANE
+                </span>
               </div>
             </div>
-
-            <div className="space-y-2 text-xs text-slate-400">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                <span>WebXR & Google Scene Viewer / Apple Quick Look supported</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Camera className="w-4 h-4 text-cyan-400" />
-                <span>Camera feed is processed locally on-device and never stored</span>
-              </div>
-            </div>
-
-            {launchStatus && (
-              <div className="p-3 bg-slate-800 border border-slate-700 rounded-xl text-xs text-cyan-300">
-                {launchStatus}
-              </div>
-            )}
 
             <button
               onClick={handleNativeArLaunch}
-              className="w-full flex items-center justify-center gap-2 py-3.5 px-4 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold rounded-2xl shadow-lg shadow-cyan-500/25 transition-all duration-200 cursor-pointer active:scale-98"
+              className="btn-tactile w-full py-2.5 bg-gradient-to-b from-[#1e2332] to-[#141722] hover:from-[#262c3e] hover:to-[#191d2a] text-emerald-300 border border-emerald-500/50 hover:border-emerald-400 rounded-lg text-xs font-bold tracking-wider uppercase flex items-center justify-center gap-2 cursor-pointer shadow-md"
             >
-              <Camera className="w-5 h-5" />
-              Start Interactive AR Session
+              <Camera className="w-3.5 h-3.5 text-emerald-400" />
+              <span>{isMobile ? 'ACTIVATE CAMERA AR' : 'TRIGGER WEBXR SESSION'}</span>
             </button>
           </div>
-        ) : (
-          <div className="space-y-5">
-            <div className="text-center">
-              <p className="text-sm text-slate-300 mb-4">
-                To project this 3D circuit into your real-world physical space, scan this QR code using your phone camera (iOS Safari or Android Chrome):
-              </p>
+        </div>
 
-              {/* QR Code Container */}
-              <div className="inline-block p-4 bg-white rounded-2xl shadow-xl shadow-cyan-950/50">
-                {qrDataUrl ? (
-                  <img src={qrDataUrl} alt="Scan QR for AR" className="w-48 h-48 rounded-lg" />
-                ) : (
-                  <div className="w-48 h-48 flex items-center justify-center text-slate-400">
-                    Generating QR code...
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="p-3.5 bg-slate-800/80 border border-slate-700/60 rounded-xl flex items-start gap-3">
-              <QrCode className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />
-              <div className="text-xs text-slate-300 leading-relaxed">
-                <span className="font-semibold text-white">Instant Cross-Platform Handoff:</span> Opening the link on mobile instantly presents the one-tap spatial AR launcher with 1:1 scale placement.
-              </div>
-            </div>
-
-            <div className="pt-1">
-              <button
-                onClick={handleNativeArLaunch}
-                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium rounded-xl border border-slate-700 transition-colors"
-              >
-                <ExternalLink className="w-4 h-4" />
-                Test Mobile WebXR In Browser
-              </button>
-            </div>
-          </div>
-        )}
+        {/* Modal Footer Notice */}
+        <div className="mt-5 pt-4 border-t border-[#1c202d] flex items-center justify-between text-[10px] font-mono text-[#5f6880]">
+          <span>REQUIREMENT: iOS 12+ (ARKit) OR ANDROID 8+ (ARCore)</span>
+          <span className="text-emerald-400">CALIBRATED</span>
+        </div>
       </div>
     </div>
   );
