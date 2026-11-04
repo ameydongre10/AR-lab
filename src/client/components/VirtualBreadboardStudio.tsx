@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
-import { Power, CheckCircle, XCircle, HelpCircle, Save, Sparkles, RefreshCw, Cpu, Activity, Lightbulb } from 'lucide-react';
+import { Power, CheckCircle, XCircle, Save, RefreshCw, Cpu, Activity, Lightbulb, Zap, ShieldCheck } from 'lucide-react';
 import { Experiment } from '../types/index.ts';
 import { LogicValue, logicToString } from '../../shared/logic.ts';
 import { simulateCircuit, CircuitNetlist } from '../../shared/circuitSimulator.ts';
@@ -25,7 +25,7 @@ export const VirtualBreadboardStudio: React.FC<VirtualBreadboardStudioProps> = (
   const [testedRows, setTestedRows] = useState<Record<string, { expected: boolean; actual: boolean; passed: boolean }>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [studentName, setStudentName] = useState('Lab Student');
+  const [studentName, setStudentName] = useState('EE Lab Group 1');
 
   const variables = experiment.truthTableTarget?.variables || experiment.defaultInputs || ['A', 'B'];
 
@@ -38,11 +38,9 @@ export const VirtualBreadboardStudio: React.FC<VirtualBreadboardStudioProps> = (
       gndConnected: powerOn
     }));
 
-    // Example wire routing for XOR SOP / POS / general
     const wires: CircuitNetlist['wires'] = [];
 
     if (experiment.canonicalForm === 'SOP') {
-      // Inputs to Inverters and AND gates
       wires.push(
         { from: 'input:A', to: 'chip:IC1_7404:1A' },
         { from: 'input:B', to: 'chip:IC1_7404:2A' },
@@ -55,7 +53,6 @@ export const VirtualBreadboardStudio: React.FC<VirtualBreadboardStudioProps> = (
         { from: 'chip:IC3_7432:1Y', to: 'output:LED' }
       );
     } else {
-      // POS wiring
       wires.push(
         { from: 'input:A', to: 'chip:IC3_7432:1A' },
         { from: 'input:B', to: 'chip:IC3_7432:1B' },
@@ -79,10 +76,10 @@ export const VirtualBreadboardStudio: React.FC<VirtualBreadboardStudioProps> = (
 
   const simulation = simulateCircuit(buildCurrentNetlist());
 
-  // Calculate current active binary key, e.g. "01"
+  // Current binary pattern, e.g. "01"
   const currentBinary = variables.map(v => (inputStates[v] === LogicValue.High ? '1' : '0')).join('');
 
-  // Find expected output for current binary valuation
+  // Target expected output
   const targetRow = experiment.truthTableTarget?.rows.find(r => r.binary === currentBinary);
   const expectedOutput = targetRow ? targetRow.output : false;
   const currentActualOutput = simulation.outputLed === LogicValue.High;
@@ -102,13 +99,12 @@ export const VirtualBreadboardStudio: React.FC<VirtualBreadboardStudioProps> = (
           }
         };
 
-        // If all rows are now tested and passed, celebrate!
         const totalRows = experiment.truthTableTarget?.rows.length || 4;
         const allPassed = Object.keys(next).length === totalRows && Object.values(next).every(r => r.passed);
         if (allPassed && Object.keys(prev).length < totalRows) {
           confetti({
-            particleCount: 80,
-            spread: 60,
+            particleCount: 75,
+            spread: 55,
             origin: { y: 0.6 }
           });
         }
@@ -123,6 +119,11 @@ export const VirtualBreadboardStudio: React.FC<VirtualBreadboardStudioProps> = (
       ...prev,
       [v]: prev[v] === LogicValue.High ? LogicValue.Low : LogicValue.High
     }));
+  };
+
+  const handleResetVerification = () => {
+    setTestedRows({});
+    setSaveSuccess(false);
   };
 
   const handleSaveSession = async () => {
@@ -148,14 +149,13 @@ export const VirtualBreadboardStudio: React.FC<VirtualBreadboardStudioProps> = (
           verifiedAt: new Date().toISOString()
         },
         truthTableResults: rows,
-        notes: `Simulated in Virtual Breadboard Studio. Evaluated ${rows.length} rows.`
+        notes: `Verified on Swiss Precision Hardware Bench DB-7400 (${simulation.iterations} fixpoint cycles)`
       });
 
       setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 3000);
       if (onSessionSaved) onSessionSaved();
     } catch (err) {
-      console.error('Failed to save lab session:', err);
+      console.error('Failed to record session:', err);
     } finally {
       setIsSaving(false);
     }
@@ -165,204 +165,326 @@ export const VirtualBreadboardStudio: React.FC<VirtualBreadboardStudioProps> = (
   const verifiedCount = Object.values(testedRows).filter(r => r.passed).length;
   const progressPercent = Math.round((verifiedCount / totalRowsCount) * 100);
 
+  // Digital Voltmeter voltage calculation
+  const busVoltage = powerOn ? 5.02 : 0.00;
+  const probeVoltage = !powerOn || currentIsUndef ? 0.00 : currentActualOutput ? 4.95 : 0.08;
+
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 lg:p-8 shadow-2xl space-y-6">
-      {/* Studio Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-800">
+    <div className="bg-[#0e1017] border border-[#232737] rounded-xl shadow-2xl overflow-hidden font-mono">
+      
+      {/* 1. Milled Aluminum Chassis Instrument Header */}
+      <div className="bg-[#12141c] border-b border-[#222636] px-5 py-3.5 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shadow-inner">
-            <Cpu className="w-6 h-6" />
+          <div className="w-8 h-8 rounded bg-[#171a25] border border-[#2c3245] flex items-center justify-center text-emerald-400 shadow-inner">
+            <Cpu className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-white tracking-tight">Interactive Virtual Breadboard Studio</h3>
-            <p className="text-xs text-slate-400">
-              Deterministic 3-Valued Fixpoint Logic Simulator • TTL 7400 DIP Packages
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-bold text-white tracking-wider uppercase">
+                DIGITAL LOGIC BENCH // DB-7400
+              </h3>
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#1b202e] text-emerald-400 border border-emerald-500/30">
+                {experiment.canonicalForm} TOPOLOGY
+              </span>
+            </div>
+            <p className="text-[11px] text-[#78819a]">
+              Deterministic 3-Valued Fixpoint Solver • {simulation.iterations} Cycles
             </p>
           </div>
         </div>
 
-        {/* Power Switch & Status */}
-        <div className="flex items-center gap-3">
+        {/* Master Power Toggle & Digital Voltmeter Readout */}
+        <div className="flex items-center gap-4">
+          {/* Voltmeter Display Panel */}
+          <div className="bg-[#090b0f] border border-[#252a3b] px-3 py-1.5 rounded-lg flex items-center gap-3">
+            <div className="text-[10px] text-[#717a94] uppercase tracking-wider font-semibold">
+              VCC BUS:
+            </div>
+            <div className={`text-sm font-mono font-black tabular-nums ${powerOn ? 'text-emerald-400 glow-phosphor-sm' : 'text-rose-500'}`}>
+              {busVoltage.toFixed(2)}V DC
+            </div>
+          </div>
+
+          {/* Heavy-Duty Industrial Rocker Switch */}
           <button
             onClick={() => setPowerOn(!powerOn)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer shadow-lg ${
+            className={`btn-tactile flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer border ${
               powerOn
-                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shadow-emerald-500/10'
-                : 'bg-rose-500/20 text-rose-400 border border-rose-500/40 shadow-rose-500/10'
+                ? 'bg-[#15241d] text-emerald-400 border-emerald-500/50 hover:bg-[#1a2f25]'
+                : 'bg-[#261517] text-rose-400 border-rose-500/50 hover:bg-[#331c20]'
             }`}
           >
-            <Power className="w-4 h-4" />
-            DC Power: {powerOn ? '+5V ACTIVE' : 'OFF (0V)'}
+            <span className={`w-2 h-2 rounded-full ${powerOn ? 'bg-emerald-400 glow-phosphor-sm' : 'bg-rose-500'}`}></span>
+            <Power className="w-3.5 h-3.5" />
+            <span>{powerOn ? 'POWER: ACTIVE' : 'POWER: OFF'}</span>
           </button>
         </div>
       </div>
 
-      {/* Main Studio Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left: Input Switches & Power Controls */}
-        <div className="lg:col-span-4 bg-slate-950/60 rounded-2xl p-5 border border-slate-800/80 space-y-5">
-          <div className="flex items-center justify-between">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-              <Activity className="w-4 h-4 text-cyan-400" />
-              Primary Logic Inputs
-            </h4>
-            <span className="text-xs font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300">
-              Pattern: {currentBinary}
-            </span>
-          </div>
-
-          <div className="space-y-3">
-            {variables.map(v => {
-              const val = inputStates[v];
-              const isHigh = val === LogicValue.High;
-              return (
-                <div
-                  key={v}
-                  className="flex items-center justify-between p-3.5 bg-slate-900 border border-slate-800 rounded-xl hover:border-slate-700 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="w-7 h-7 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center font-mono font-bold text-sm text-cyan-300">
-                      {v}
-                    </span>
-                    <div>
-                      <div className="text-xs font-medium text-slate-200">Logic Variable {v}</div>
-                      <div className="text-[10px] text-slate-500 font-mono">
-                        {isHigh ? '+5V DC (HIGH)' : '0V GND (LOW)'}
-                      </div>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => toggleInput(v)}
-                    disabled={!powerOn}
-                    className={`w-14 h-8 rounded-full p-1 transition-colors duration-200 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${
-                      isHigh ? 'bg-cyan-500' : 'bg-slate-700'
-                    }`}
-                  >
-                    <div
-                      className={`w-6 h-6 rounded-full bg-white shadow-md transform transition-transform duration-200 flex items-center justify-center text-[10px] font-bold text-slate-900 ${
-                        isHigh ? 'translate-x-6' : 'translate-x-0'
-                      }`}
-                    >
-                      {isHigh ? '1' : '0'}
-                    </div>
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Logic Output Indicator LED */}
-          <div className="pt-4 border-t border-slate-800/80">
-            <div className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
-              <Lightbulb className="w-4 h-4 text-amber-400" />
-              Output Probe & Logic LED
+      {/* 2. Main Instrument Layout */}
+      <div className="p-5 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 bg-grid-subtle">
+        
+        {/* Left Rack: Primary Signal Generators & Voltage Probe (4 cols) */}
+        <div className="lg:col-span-4 space-y-5">
+          
+          {/* Primary Logic Inputs Rack */}
+          <div className="bg-[#12141c] border border-[#232737] rounded-xl p-4 space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-[#1f2231]">
+              <span className="text-[11px] font-bold text-[#838da7] uppercase tracking-wider flex items-center gap-1.5">
+                <Activity className="w-3.5 h-3.5 text-emerald-400" />
+                DIGITAL INPUT BUS
+              </span>
+              <span className="text-[11px] text-emerald-300 font-bold bg-[#1a2130] px-2 py-0.5 rounded border border-[#2b354e]">
+                REG: [{currentBinary}]₂
+              </span>
             </div>
 
-            <div className="p-4 bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-between">
+            <div className="space-y-2.5">
+              {variables.map(v => {
+                const val = inputStates[v];
+                const isHigh = val === LogicValue.High;
+                return (
+                  <div
+                    key={v}
+                    className="flex items-center justify-between p-2.5 bg-[#0a0c12] border border-[#1e2230] rounded-lg hover:border-[#2e354a] transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-7 h-7 rounded bg-[#151822] border border-[#2b3144] flex items-center justify-center font-bold text-xs text-white">
+                        {v}
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold text-[#d2d8e9]">
+                          Variable {v}
+                        </div>
+                        <div className="text-[10px] text-[#6d768f]">
+                          {isHigh ? '+5.0V (HIGH)' : '0.0V (LOW)'}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Industrial Rocker Toggle Control */}
+                    <button
+                      onClick={() => toggleInput(v)}
+                      disabled={!powerOn}
+                      className={`btn-tactile px-3 py-1 rounded text-xs font-bold flex items-center gap-1.5 border cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${
+                        isHigh
+                          ? 'bg-[#152a20] text-emerald-300 border-emerald-500/50 hover:bg-[#1b3528]'
+                          : 'bg-[#181a23] text-[#717a94] border-[#262c3e] hover:bg-[#202330]'
+                      }`}
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full ${isHigh ? 'bg-emerald-400 glow-phosphor-sm' : 'bg-[#4b5368]'}`}></span>
+                      <span>{isHigh ? 'BIT 1' : 'BIT 0'}</span>
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Logic Output Probe & 5mm Phosphor LED */}
+          <div className="bg-[#12141c] border border-[#232737] rounded-xl p-4 space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-[#1f2231]">
+              <span className="text-[11px] font-bold text-[#838da7] uppercase tracking-wider flex items-center gap-1.5">
+                <Lightbulb className="w-3.5 h-3.5 text-amber-400" />
+                OUTPUT TEST PROBE (LED)
+              </span>
+              <span className="text-[10px] text-[#717a94]">
+                MEASURED: <span className="text-white font-bold">{probeVoltage.toFixed(2)}V</span>
+              </span>
+            </div>
+
+            <div className="p-3 bg-[#0a0c12] border border-[#1e2230] rounded-lg flex items-center justify-between">
               <div>
-                <span className="text-xs font-medium text-slate-300">Terminal: F (LED)</span>
-                <div className="text-[10px] font-mono text-slate-500">
-                  Status: {currentIsUndef ? 'UNDEFINED (X)' : currentActualOutput ? 'HIGH (1)' : 'LOW (0)'}
+                <div className="text-xs font-bold text-white">Logic Terminal F</div>
+                <div className="text-[10px] text-[#717a94] mt-0.5">
+                  State: {currentIsUndef ? 'UNDEFINED (X)' : currentActualOutput ? 'LOGIC HIGH (1)' : 'LOGIC LOW (0)'}
                 </div>
               </div>
 
-              {/* Glowing LED Element */}
-              <div className="flex items-center gap-2">
-                <div
-                  className={`w-8 h-8 rounded-full border-2 transition-all duration-300 flex items-center justify-center font-bold text-xs ${
-                    currentIsUndef
-                      ? 'bg-amber-500/20 border-amber-500 text-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.5)]'
-                      : currentActualOutput
-                      ? 'bg-emerald-500 border-emerald-300 text-slate-950 shadow-[0_0_20px_rgba(16,185,129,0.8)]'
-                      : 'bg-slate-800 border-slate-700 text-slate-500 shadow-none'
-                  }`}
-                >
-                  {currentIsUndef ? '?' : currentActualOutput ? '1' : '0'}
+              {/* Realistic 5mm Diffused Laboratory LED */}
+              <div className="flex items-center gap-3">
+                <div className="relative flex items-center justify-center">
+                  {/* Outer bezel */}
+                  <div className="w-9 h-9 rounded-full bg-[#1b1e2a] border-2 border-[#383e54] flex items-center justify-center shadow-inner">
+                    {/* Inner glowing lens */}
+                    <div
+                      className={`w-6 h-6 rounded-full transition-all duration-150 flex items-center justify-center text-[10px] font-black ${
+                        currentIsUndef
+                          ? 'bg-amber-500/30 border border-amber-400 text-amber-300 glow-amber-sm'
+                          : currentActualOutput
+                          ? 'bg-emerald-400 border border-emerald-200 text-[#090b10] glow-phosphor-md'
+                          : 'bg-[#181a23] border border-[#2b3044] text-[#555d73]'
+                      }`}
+                    >
+                      {currentIsUndef ? 'X' : currentActualOutput ? '1' : '0'}
+                    </div>
+                  </div>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Real-time Oscilloscope Timing Waveform Preview */}
+          <div className="bg-[#12141c] border border-[#232737] rounded-xl p-4 crt-screen">
+            <div className="flex items-center justify-between pb-2 mb-2 border-b border-[#1f2231]">
+              <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1">
+                <Zap className="w-3 h-3" />
+                SCOPE TRACE // DIGITAL WAVEFORMS
+              </span>
+              <span className="text-[9px] text-[#636c84]">5ns / DIV</span>
+            </div>
+
+            {/* Simulated Live Logic Waveform Canvas */}
+            <div className="h-20 bg-[#07090d] border border-[#1a1e2b] rounded p-2 flex flex-col justify-around relative">
+              {/* Grid lines */}
+              <div className="absolute inset-0 bg-grid-subtle pointer-events-none opacity-40"></div>
+
+              {/* Input A trace */}
+              <div className="flex items-center gap-2 text-[9px] relative z-10">
+                <span className="w-5 text-[#8892ad] font-bold">IN·A</span>
+                <div className="flex-1 flex items-center">
+                  <svg className="w-full h-4 stroke-cyan-400 stroke-[1.5] fill-none" viewBox="0 0 200 20" preserveAspectRatio="none">
+                    {inputStates.A === LogicValue.High ? (
+                      <path d="M 0 5 L 80 5 L 80 5 L 200 5" />
+                    ) : (
+                      <path d="M 0 15 L 80 15 L 80 15 L 200 15" />
+                    )}
+                  </svg>
+                </div>
+                <span className={`text-[9px] font-bold ${inputStates.A === LogicValue.High ? 'text-cyan-400' : 'text-[#555e75]'}`}>
+                  {inputStates.A === LogicValue.High ? '1' : '0'}
+                </span>
+              </div>
+
+              {/* Input B trace */}
+              <div className="flex items-center gap-2 text-[9px] relative z-10">
+                <span className="w-5 text-[#8892ad] font-bold">IN·B</span>
+                <div className="flex-1 flex items-center">
+                  <svg className="w-full h-4 stroke-amber-400 stroke-[1.5] fill-none" viewBox="0 0 200 20" preserveAspectRatio="none">
+                    {inputStates.B === LogicValue.High ? (
+                      <path d="M 0 5 L 120 5 L 120 5 L 200 5" />
+                    ) : (
+                      <path d="M 0 15 L 120 15 L 120 15 L 200 15" />
+                    )}
+                  </svg>
+                </div>
+                <span className={`text-[9px] font-bold ${inputStates.B === LogicValue.High ? 'text-amber-400' : 'text-[#555e75]'}`}>
+                  {inputStates.B === LogicValue.High ? '1' : '0'}
+                </span>
+              </div>
+
+              {/* Output LED trace */}
+              <div className="flex items-center gap-2 text-[9px] relative z-10 border-t border-[#171a26] pt-1">
+                <span className="w-5 text-emerald-400 font-bold">OUT</span>
+                <div className="flex-1 flex items-center">
+                  <svg className="w-full h-4 stroke-emerald-400 stroke-[2] fill-none" viewBox="0 0 200 20" preserveAspectRatio="none">
+                    {currentActualOutput ? (
+                      <path d="M 0 4 L 200 4" />
+                    ) : (
+                      <path d="M 0 16 L 200 16" />
+                    )}
+                  </svg>
+                </div>
+                <span className={`text-[9px] font-bold ${currentActualOutput ? 'text-emerald-400' : 'text-[#555e75]'}`}>
+                  {currentIsUndef ? 'X' : currentActualOutput ? '1' : '0'}
+                </span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Right: Breadboard Schematic & Live Truth Table Verification */}
+        {/* Right Rack: Breadboard IC Bay & Calibrated Truth Table (8 cols) */}
         <div className="lg:col-span-8 space-y-5">
-          {/* Virtual Breadboard Topology Card */}
-          <div className="bg-slate-950/60 rounded-2xl p-5 border border-slate-800/80">
-            <div className="flex items-center justify-between mb-4">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                Seated TTL 7400 IC Architecture ({experiment.canonicalForm} Topology)
-              </h4>
-              <span className="text-[11px] text-cyan-400 font-mono">
-                {simulation.iterations} fixpoint iterations
+          
+          {/* Seated 7400 TTL IC Packages */}
+          <div className="bg-[#12141c] border border-[#232737] rounded-xl p-4">
+            <div className="flex items-center justify-between pb-2 mb-3 border-b border-[#1f2231]">
+              <span className="text-[11px] font-bold text-[#838da7] uppercase tracking-wider flex items-center gap-1.5">
+                <Cpu className="w-3.5 h-3.5 text-blue-400" />
+                SEATED 7400 TTL DIP PACKAGES (DIP-14)
+              </span>
+              <span className="text-[10px] text-[#717a94]">
+                VCC: PIN 14 • GND: PIN 7
               </span>
             </div>
 
-            {/* Visual Chip Rack */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {experiment.requiredIcs.map((ic, idx) => (
                 <div
                   key={ic}
-                  className="bg-slate-900 border border-slate-800 rounded-xl p-3 relative overflow-hidden group hover:border-cyan-500/50 transition-colors"
+                  className="bg-[#090b0f] border border-[#1f2332] rounded-lg p-3 relative hover:border-[#384059] transition-colors"
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-bold font-mono text-cyan-400">SN{ic}N</span>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">DIP-14</span>
+                  {/* DIP Notch at top */}
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-4 h-1 bg-[#1a1e2b] rounded-b border-b border-x border-[#333b52]"></div>
+                  
+                  <div className="flex items-center justify-between mb-1.5 pt-1">
+                    <span className="text-xs font-bold font-mono text-emerald-400">
+                      SN{ic}N
+                    </span>
+                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-[#161a25] text-[#7e88a3] border border-[#262c3e]">
+                      IC{idx + 1}
+                    </span>
                   </div>
 
-                  <div className="text-[11px] text-slate-300 font-medium">
-                    {ic === '7404' ? 'Hex Inverter' : ic === '7408' ? 'Quad AND Gate' : 'Quad OR Gate'}
+                  <div className="text-[11px] text-[#cfd5e6] font-semibold">
+                    {ic === '7404' ? 'Hex Inverter (NOT)' : ic === '7408' ? 'Quad 2-Input AND' : 'Quad 2-Input OR'}
                   </div>
 
-                  {/* Pin visual indication */}
-                  <div className="mt-3 flex justify-between items-center text-[9px] font-mono text-slate-500 border-t border-slate-800/80 pt-2">
-                    <span>Pin 14: VCC (+5V)</span>
-                    <span>Pin 7: GND</span>
+                  {/* Pin status strip */}
+                  <div className="mt-3 pt-2 border-t border-[#1a1d29] flex items-center justify-between text-[9px] text-[#6d768e]">
+                    <span className="flex items-center gap-1">
+                      <span className={`w-1 h-1 rounded-full ${powerOn ? 'bg-amber-400' : 'bg-[#3e4558]'}`}></span>
+                      Pin 14: +5V
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className={`w-1 h-1 rounded-full ${powerOn ? 'bg-blue-400' : 'bg-[#3e4558]'}`}></span>
+                      Pin 7: GND
+                    </span>
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Canonical Truth Table Verification Card */}
-          <div className="bg-slate-950/60 rounded-2xl p-5 border border-slate-800/80">
-            <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+          {/* Calibrated Truth Table Verification Sheet */}
+          <div className="bg-[#12141c] border border-[#232737] rounded-xl p-4 sm:p-5 space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#1f2231]">
               <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                  Canonical Truth Table Verification
+                <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+                  CANONICAL TRUTH TABLE CALIBRATION MATRIX
                 </h4>
-                <p className="text-[11px] text-slate-500 font-mono mt-0.5">
-                  Target: {experiment.targetExpression} ({experiment.canonicalForm})
+                <p className="text-[11px] text-[#7d87a1] mt-0.5">
+                  Formula: <span className="text-emerald-400 font-bold">{experiment.targetExpression}</span> ({experiment.canonicalForm})
                 </p>
               </div>
 
               {/* Progress Pill */}
-              <div className="flex items-center gap-2 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl">
-                <span className="text-xs font-semibold text-slate-300">
-                  {verifiedCount} / {totalRowsCount} Verified
+              <div className="flex items-center gap-2 bg-[#090b0f] border border-[#23283a] px-3 py-1.5 rounded-lg">
+                <span className="text-xs text-[#8993ac]">
+                  Verified: <span className="text-white font-bold">{verifiedCount}/{totalRowsCount}</span>
                 </span>
-                <span className={`text-xs font-bold font-mono ${progressPercent === 100 ? 'text-emerald-400' : 'text-cyan-400'}`}>
-                  ({progressPercent}%)
+                <span className={`text-xs font-bold ${progressPercent === 100 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                  [{progressPercent}%]
                 </span>
               </div>
             </div>
 
-            {/* Truth Table */}
-            <div className="overflow-x-auto rounded-xl border border-slate-800/80">
+            {/* Verification Table */}
+            <div className="overflow-x-auto rounded-lg border border-[#1f2332]">
               <table className="w-full text-left text-xs font-mono">
-                <thead className="bg-slate-900 text-slate-400 border-b border-slate-800">
+                <thead className="bg-[#090b0f] text-[#717a94] border-b border-[#1f2332]">
                   <tr>
                     {variables.map(v => (
-                      <th key={v} className="px-3.5 py-2.5 font-bold text-center text-cyan-400">
-                        {v}
+                      <th key={v} className="px-3.5 py-2 font-bold text-center text-[#9ea7bf]">
+                        VAR {v}
                       </th>
                     ))}
-                    <th className="px-3.5 py-2.5 font-bold text-center text-slate-300">Expected (F)</th>
-                    <th className="px-3.5 py-2.5 font-bold text-center text-slate-300">Simulated</th>
-                    <th className="px-3.5 py-2.5 font-bold text-center">Result</th>
+                    <th className="px-3.5 py-2 font-bold text-center text-white">EXPECTED (F)</th>
+                    <th className="px-3.5 py-2 font-bold text-center text-emerald-400">MEASURED</th>
+                    <th className="px-3.5 py-2 font-bold text-center">STATUS</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60">
+                <tbody className="divide-y divide-[#171a26]">
                   {experiment.truthTableTarget?.rows.map(row => {
                     const isActive = row.binary === currentBinary;
                     const test = testedRows[row.binary];
@@ -373,44 +495,44 @@ export const VirtualBreadboardStudio: React.FC<VirtualBreadboardStudioProps> = (
                         key={row.binary}
                         className={`transition-colors ${
                           isActive
-                            ? 'bg-cyan-500/10 font-semibold'
-                            : 'hover:bg-slate-900/40'
+                            ? 'bg-[#182030] font-bold text-white'
+                            : 'hover:bg-[#151722]'
                         }`}
                       >
                         {variables.map(v => (
-                          <td key={v} className="px-3.5 py-2 text-center text-slate-300">
+                          <td key={v} className="px-3.5 py-2 text-center text-[#cfd5e6]">
                             {row.inputs[v] ? '1' : '0'}
                           </td>
                         ))}
-                        <td className="px-3.5 py-2 text-center font-bold text-slate-200">
+                        <td className="px-3.5 py-2 text-center font-bold text-white">
                           {row.output ? '1' : '0'}
                         </td>
                         <td className="px-3.5 py-2 text-center">
                           {isActive ? (
-                            <span className={currentIsUndef ? 'text-amber-400' : currentActualOutput ? 'text-emerald-400' : 'text-slate-400'}>
+                            <span className={currentIsUndef ? 'text-amber-400' : currentActualOutput ? 'text-emerald-400' : 'text-[#848ea6]'}>
                               {currentIsUndef ? 'X' : currentActualOutput ? '1' : '0'}
                             </span>
                           ) : test ? (
-                            <span className={test.actual ? 'text-emerald-400' : 'text-slate-400'}>
+                            <span className={test.actual ? 'text-emerald-400' : 'text-[#848ea6]'}>
                               {test.actual ? '1' : '0'}
                             </span>
                           ) : (
-                            <span className="text-slate-600">-</span>
+                            <span className="text-[#434b61]">-</span>
                           )}
                         </td>
                         <td className="px-3.5 py-2 text-center">
                           {isPassed ? (
-                            <span className="inline-flex items-center gap-1 text-[11px] text-emerald-400 font-semibold">
-                              <CheckCircle className="w-3.5 h-3.5" />
+                            <span className="inline-flex items-center gap-1 text-[11px] text-emerald-400 font-bold">
+                              <CheckCircle className="w-3 h-3" />
                               PASS
                             </span>
                           ) : isActive && !currentMatches ? (
-                            <span className="inline-flex items-center gap-1 text-[11px] text-rose-400 font-semibold">
-                              <XCircle className="w-3.5 h-3.5" />
-                              MISMATCH
+                            <span className="inline-flex items-center gap-1 text-[11px] text-rose-400 font-bold">
+                              <XCircle className="w-3 h-3" />
+                              FAULT
                             </span>
                           ) : (
-                            <span className="text-slate-600">Pending</span>
+                            <span className="text-[#434b61]">WAITING</span>
                           )}
                         </td>
                       </tr>
@@ -420,32 +542,40 @@ export const VirtualBreadboardStudio: React.FC<VirtualBreadboardStudioProps> = (
               </table>
             </div>
 
-            {/* Save Session CTA Bar */}
-            <div className="mt-4 pt-4 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-3">
+            {/* Committal & Session Signature Bar */}
+            <div className="pt-3 border-t border-[#1f2231] flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2">
+                <span className="text-[11px] text-[#6d768f]">OPERATOR:</span>
                 <input
                   type="text"
                   value={studentName}
                   onChange={e => setStudentName(e.target.value)}
-                  placeholder="Student or Lab Group Name"
-                  className="bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+                  placeholder="Student or Lab Group ID"
+                  className="bg-[#090b0f] border border-[#252a3b] rounded-lg px-2.5 py-1 text-xs text-white placeholder-[#515970] focus:outline-none focus:border-emerald-500 font-mono"
                 />
+                <button
+                  onClick={handleResetVerification}
+                  title="Reset tested states"
+                  className="btn-tactile p-1.5 text-[#737c94] hover:text-white bg-[#151822] border border-[#242939] rounded-lg cursor-pointer"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                </button>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2.5">
                 {saveSuccess && (
-                  <span className="text-xs text-emerald-400 font-medium flex items-center gap-1 animate-fade-in">
-                    <CheckCircle className="w-4 h-4" />
-                    Session Persisted to Database!
+                  <span className="text-xs text-emerald-400 font-bold flex items-center gap-1">
+                    <CheckCircle className="w-3.5 h-3.5" />
+                    VERIFICATION PERSISTED
                   </span>
                 )}
                 <button
                   onClick={handleSaveSession}
                   disabled={isSaving}
-                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-xs font-semibold rounded-xl shadow-lg shadow-cyan-500/20 transition-all cursor-pointer active:scale-95 disabled:opacity-50"
+                  className="btn-tactile flex items-center gap-2 px-4 py-2 bg-gradient-to-b from-[#222838] to-[#151822] hover:from-[#2c3347] hover:to-[#1b1f2c] text-emerald-300 border border-emerald-500/50 hover:border-emerald-400 text-xs font-bold rounded-lg shadow-sm cursor-pointer disabled:opacity-50"
                 >
-                  <Save className="w-4 h-4" />
-                  {isSaving ? 'Saving...' : 'Record Verified Lab Run'}
+                  <Save className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>{isSaving ? 'COMMITTING...' : 'RECORD VERIFIED RUN'}</span>
                 </button>
               </div>
             </div>

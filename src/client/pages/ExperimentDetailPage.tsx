@@ -4,7 +4,7 @@ import { Experiment } from '../types/index.ts';
 import { Model3DViewer } from '../components/Model3DViewer.tsx';
 import { ArLaunchModal } from '../components/ArLaunchModal.tsx';
 import { VirtualBreadboardStudio } from '../components/VirtualBreadboardStudio.tsx';
-import { ArrowLeft, Sparkles, Edit3, Layers, BookOpen, CheckCircle2, Cpu, HelpCircle } from 'lucide-react';
+import { ArrowLeft, Edit3, BookOpen, Cpu, Compass, Terminal, ShieldCheck } from 'lucide-react';
 
 interface ExperimentDetailPageProps {
   experimentId: string;
@@ -33,9 +33,9 @@ export const ExperimentDetailPage: React.FC<ExperimentDetailPageProps> = ({
 
   if (isLoading || !experiment) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px]">
-        <div className="w-10 h-10 border-4 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin mb-3"></div>
-        <p className="text-xs text-slate-400">Loading laboratory activity...</p>
+      <div className="flex flex-col items-center justify-center min-h-[400px] font-mono">
+        <div className="w-8 h-8 border-2 border-[#202535] border-t-emerald-500 rounded-full animate-spin mb-3"></div>
+        <p className="text-xs text-[#717a94]">CALIBRATING BENCH FOR EXPERIMENT...</p>
       </div>
     );
   }
@@ -43,81 +43,87 @@ export const ExperimentDetailPage: React.FC<ExperimentDetailPageProps> = ({
   const modelUrl = (experiment as any).model?.fileUrl || '/models/ar-lab-station.glb';
 
   return (
-    <div className="space-y-8 pb-16">
-      {/* Top Navigation & Action Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+    <div className="space-y-8 pb-16 font-mono">
+      
+      {/* 1. Header Toolbar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#202535]">
         <button
           onClick={() => onNavigate('catalog')}
-          className="flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-white bg-slate-900 border border-slate-800 px-3.5 py-2 rounded-xl transition-colors cursor-pointer"
+          className="btn-tactile flex items-center gap-2 text-xs text-[#8c96b0] hover:text-white bg-[#10121a] border border-[#222737] px-3.5 py-1.5 rounded-lg transition-colors cursor-pointer"
         >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back to Catalog</span>
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>CATALOG DIRECTORY</span>
         </button>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           <button
             onClick={() => onNavigate('edit', experiment.id)}
-            className="flex items-center gap-2 px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 transition-colors cursor-pointer"
+            className="btn-tactile flex items-center gap-1.5 px-3 py-1.5 bg-[#141722] hover:bg-[#1a1e2c] text-[#a0a9c2] hover:text-white text-xs font-bold rounded-lg border border-[#262c3e] transition-colors cursor-pointer"
           >
             <Edit3 className="w-3.5 h-3.5" />
-            <span>Edit Experiment</span>
+            <span>EDIT SPECIFICATION</span>
           </button>
 
           <button
             onClick={() => setIsArModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-xs font-semibold rounded-xl shadow-lg shadow-cyan-500/20 transition-all cursor-pointer active:scale-95"
+            className="btn-tactile flex items-center gap-2 px-4 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-[#090b10] text-xs font-bold uppercase tracking-wider rounded-lg shadow-sm cursor-pointer"
           >
-            <Sparkles className="w-4 h-4" />
-            <span>Launch Spatial AR</span>
+            <Compass className="w-3.5 h-3.5" />
+            <span>LAUNCH SPATIAL AR</span>
           </button>
         </div>
       </div>
 
-      {/* Hero Overview Card: Text & 3D Preview */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* Left Information Column */}
-        <div className="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xl">
+      {/* 2. Overview Sheet: Module Data & 3D Asset Reticle */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        {/* Left Specification Column (7 cols) */}
+        <div className="lg:col-span-7 bg-[#0f1118] border border-[#232737] rounded-xl p-5 sm:p-6 space-y-5 shadow-xl">
           <div className="space-y-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">
-                {experiment.canonicalForm} Canonical Form
+            <div className="flex flex-wrap items-center gap-2 text-[10px]">
+              <span className="font-bold px-2 py-0.5 rounded bg-[#161a25] text-emerald-400 border border-emerald-500/30">
+                {experiment.canonicalForm} CANONICAL FORM
               </span>
-              <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-slate-800 text-slate-400">
-                {experiment.difficulty} Level
+              <span className="px-2 py-0.5 rounded bg-[#13151f] text-[#78829b] border border-[#222636] uppercase font-bold">
+                TIER: {experiment.difficulty}
               </span>
               {(experiment as any).category && (
-                <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-slate-800 text-slate-300">
+                <span className="px-2 py-0.5 rounded bg-[#13151f] text-[#9ba4be] border border-[#222636]">
                   {(experiment as any).category.name}
                 </span>
               )}
             </div>
 
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-snug">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-sans">
               {experiment.title}
             </h1>
 
-            <div className="p-3 bg-slate-950 border border-slate-800/80 rounded-2xl flex items-center justify-between font-mono text-xs">
-              <span className="text-slate-400">Target Boolean Function:</span>
-              <span className="text-cyan-300 font-bold text-sm">F = {experiment.targetExpression}</span>
+            {/* Target Formula Panel */}
+            <div className="p-3 bg-[#090b0f] border border-[#222737] rounded-lg flex items-center justify-between text-xs">
+              <span className="text-[#717a94] uppercase tracking-wider font-bold">TARGET BOOLEAN EQUATION:</span>
+              <span className="text-emerald-400 font-bold text-sm tracking-wide">
+                F = {experiment.targetExpression}
+              </span>
             </div>
 
-            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+            <p className="text-xs sm:text-sm text-[#8c97b0] leading-relaxed font-sans">
               {experiment.description}
             </p>
           </div>
 
-          {/* Required Hardware Breakdown */}
-          <div className="pt-4 border-t border-slate-800 space-y-3">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-              <Cpu className="w-4 h-4 text-cyan-400" />
-              Required Laboratory Components
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* Required Hardware Chips */}
+          <div className="pt-3 border-t border-[#1c202d] space-y-2.5">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-[#717a94] flex items-center gap-1.5">
+              <Cpu className="w-3.5 h-3.5 text-blue-400" />
+              <span>REQUIRED TTL 7400 HARDWARE PACKAGES</span>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
               {experiment.requiredIcs.map(ic => (
-                <div key={ic} className="p-3 bg-slate-950/80 border border-slate-800 rounded-xl space-y-1">
-                  <div className="text-xs font-mono font-bold text-cyan-400">SN{ic}N</div>
-                  <div className="text-[10px] text-slate-400">
-                    {ic === '7404' ? 'Hex Inverter (6 NOT)' : ic === '7408' ? 'Quad 2-Input AND' : 'Quad 2-Input OR'}
+                <div key={ic} className="p-2.5 bg-[#090b0f] border border-[#1e2332] rounded-lg space-y-0.5">
+                  <div className="text-xs font-bold text-emerald-400">SN{ic}N</div>
+                  <div className="text-[10px] text-[#717a94]">
+                    {ic === '7404' ? 'Hex Inverter (NOT)' : ic === '7408' ? 'Quad 2-In AND' : 'Quad 2-In OR'}
                   </div>
                 </div>
               ))}
@@ -125,8 +131,8 @@ export const ExperimentDetailPage: React.FC<ExperimentDetailPageProps> = ({
           </div>
         </div>
 
-        {/* Right Column: 3D AR Preview Viewer */}
-        <div className="lg:col-span-5 h-[360px] sm:h-[420px]">
+        {/* Right CAD Viewport (5 cols) */}
+        <div className="lg:col-span-5 h-[360px] sm:h-[400px]">
           <Model3DViewer
             modelUrl={modelUrl}
             altText={experiment.title}
@@ -135,30 +141,30 @@ export const ExperimentDetailPage: React.FC<ExperimentDetailPageProps> = ({
         </div>
       </div>
 
-      {/* Step-by-Step Instructions */}
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xl">
-        <div className="flex items-center gap-2 pb-2 border-b border-slate-800">
-          <BookOpen className="w-5 h-5 text-cyan-400" />
-          <h2 className="text-base font-bold text-white tracking-tight uppercase tracking-wider">
-            Laboratory Procedure & Wiring Instructions
+      {/* 3. Laboratory Wiring Procedure */}
+      <div className="bg-[#0f1118] border border-[#232737] rounded-xl p-5 sm:p-6 space-y-5 shadow-xl">
+        <div className="flex items-center gap-2 pb-2.5 border-b border-[#1f2231]">
+          <BookOpen className="w-4 h-4 text-emerald-400" />
+          <h2 className="text-xs font-bold text-white uppercase tracking-wider">
+            LABORATORY STANDARD OPERATING PROCEDURE & WIRING PROTOCOL
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
           {experiment.instructions.map((step, idx) => (
-            <div key={idx} className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-4 space-y-2">
+            <div key={idx} className="bg-[#090b0f] border border-[#1e2332] rounded-lg p-3.5 space-y-1.5">
               <div className="flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 flex items-center justify-center text-xs font-bold font-mono">
+                <span className="w-5 h-5 rounded bg-[#161a25] border border-[#293043] text-emerald-400 flex items-center justify-center text-[10px] font-bold">
                   {step.step || idx + 1}
                 </span>
-                <h4 className="text-xs font-bold text-white">{step.title}</h4>
+                <h4 className="text-xs font-bold text-white font-sans">{step.title}</h4>
               </div>
-              <p className="text-xs text-slate-300 leading-relaxed pl-8">
+              <p className="text-xs text-[#808a9f] leading-relaxed pl-7 font-sans">
                 {step.details}
               </p>
               {step.wiringTips && (
-                <div className="pl-8 pt-1 text-[11px] text-amber-300/90 font-mono">
-                  💡 Tip: {step.wiringTips}
+                <div className="pl-7 pt-1 text-[10px] text-amber-400">
+                  ⚡ ADVISORY: {step.wiringTips}
                 </div>
               )}
             </div>
@@ -166,7 +172,7 @@ export const ExperimentDetailPage: React.FC<ExperimentDetailPageProps> = ({
         </div>
       </div>
 
-      {/* Interactive Virtual Breadboard Studio */}
+      {/* 4. Interactive Virtual Breadboard Studio */}
       <VirtualBreadboardStudio experiment={experiment} />
 
       {/* AR Launch Modal */}
